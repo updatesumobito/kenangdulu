@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+const file='src/components/frame-studio.tsx';let s=fs.readFileSync(file,'utf8');
+s=s.replace("import FrameLayers from './frame-layers';","import FrameLayers from './frame-layers';\nimport {RESIZE_ANCHORS} from '@/lib/mokabooth/frame-geometry';\nimport {resizeNormalizedSlot} from '@/lib/frame-adapter';");
+const before='const b=canvas.current.getBoundingClientRect(),{index,original,startX,startY}=drag.current;setFrame';
+const after='const b=canvas.current.getBoundingClientRect(),{index,original,startX,startY,anchor}=drag.current;if(anchor){const next=resizeNormalizedSlot(original,anchor,{x:ev.clientX,y:ev.clientY},b,frame);setFrame((f:any)=>({...f,slots:f.slots.map((s:any,i:number)=>i===index?next:s)}));return}setFrame';
+if(!s.includes(before))throw Error('Pointer handler not found');s=s.replace(before,after);
+const label='<span>{i+1}</span></button>)}',handles='<span>{i+1}</span>{slot===i&&RESIZE_ANCHORS.map(anchor=><span key={anchor} className="resize-handle" data-anchor={anchor} style={{left:anchor.endsWith("left")?0:anchor.endsWith("right")?"100%":"50%",top:anchor.startsWith("top")?0:anchor.startsWith("bottom")?"100%":"50%"}} onPointerDown={ev=>{ev.stopPropagation();ev.currentTarget.setPointerCapture(ev.pointerId);drag.current={anchor,index:i,original:{...s},before:structuredClone(frame)}}}/>)}</button>)}';
+if(!s.includes(label))throw Error('Slot label not found');s=s.replace(label,handles);fs.writeFileSync(file,s);
+fs.appendFileSync('src/app/globals.css','\n.resize-handle{position:absolute;width:11px;height:11px;background:white;border:1px solid var(--primary);transform:translate(-50%,-50%);cursor:nwse-resize;touch-action:none;z-index:2}.resize-handle:before{content:"";position:absolute;inset:-10px}.resize-handle[data-anchor=top-center],.resize-handle[data-anchor=bottom-center]{cursor:ns-resize}.resize-handle[data-anchor=middle-left],.resize-handle[data-anchor=middle-right]{cursor:ew-resize}\n');

@@ -1,0 +1,29 @@
+/* v2 PROVISIONAL ONLY. Codex must replace after read-only BOOKING design token audit; wedding maroon is not claimed as global BOOKING color. */
+/* KOMUKUNA VIRTUAL FALLBACK TOKENS — NOT BOOKING-VERIFIED.
+   Replace via local BOOKING audit, preserving semantic variable names.
+   Maroon/ivory sample derived from prior Komukuna photobooth gallery theme,
+   which is NOT a global BOOKING identity claim. */
+:root {
+  --kv-bg: #F9F6F0;
+  --kv-surface: #FFFDFC;
+  --kv-ink: #391716;
+  --kv-muted: #75645F;
+  --kv-primary: #6A0C12;
+  --kv-primary-hover: #711820;
+  --kv-border: #E3D6C8;
+  --kv-hero: #520305;
+  --kv-accent: #D9BC8E;
+  --kv-on-dark: #FFFCF8;
+  --kv-success: #2F684A;
+  --kv-danger: #A32735;
+  --kv-radius-card: 16px;
+  --kv-radius-control: 10px;
+  --kv-space-1: 4px;
+  --kv-space-2: 8px;
+  --kv-space-3: 12px;
+  --kv-space-4: 16px;
+  --kv-space-6: 24px;
+  --kv-space-8: 32px;
+  --kv-font-ui: 'DM Sans', system-ui, sans-serif;
+  --kv-font-display: 'Cormorant Garamond', Georgia, serif;
+}

@@ -1,0 +1,13 @@
+import {PGlite} from '@electric-sql/pglite';
+import {readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+const db=new PGlite();for(const f of (await readdir('infra/migrations')).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile('infra/migrations/'+f,'utf8'));
+const buyer=randomUUID(),partner=randomUUID(),other=randomUUID(),org=randomUUID(),otherOrg=randomUUID(),e1=randomUUID(),e2=randomUUID(),e3=randomUUID();
+for(const [id,role]of [[buyer,'buyer'],[partner,'partner'],[other,'partner']])await db.query('INSERT INTO users(id,email,password_hash,name,role) VALUES($1,$2,$3,$4,$5)',[id,id+'@test','unused','RLS fixture',role]);
+await db.query('INSERT INTO organizations(id,owner_id,name) VALUES($1,$2,$3),($4,$5,$6)',[org,partner,'A',otherOrg,other,'B']);
+for(const [id,o,c,ch] of [[e1,'00000000-0000-4000-8000-000000000001',buyer,'DIRECT_MANAGED'],[e2,org,null,'PARTNER_SELF_SERVICE'],[e3,otherOrg,null,'PARTNER_SELF_SERVICE']])await db.query("INSERT INTO events(id,org_id,customer_id,channel,slug,name,start_at,end_at,snapshot,settings) VALUES($1,$2,$3,$4,$5,'Fixture',now(),now(),'{}','{}')",[id,o,c,ch,id]);
+await db.exec('CREATE ROLE kv_test_user; GRANT USAGE ON SCHEMA public TO kv_test_user; GRANT SELECT,UPDATE ON ALL TABLES IN SCHEMA public TO kv_test_user; SET ROLE kv_test_user');
+await db.query("SELECT set_config('app.user_id',$1,false)",[buyer]);assert.equal((await db.query('SELECT * FROM events')).rows.length,1);assert.equal((await db.query("UPDATE events SET name='No' RETURNING id")).rows.length,0);
+await db.query("SELECT set_config('app.user_id',$1,false)",[partner]);assert.equal((await db.query('SELECT * FROM events')).rows.length,1);assert.equal((await db.query('SELECT * FROM events WHERE id=$1',[e3])).rows.length,0);assert.equal((await db.query("UPDATE events SET name='Own edit' WHERE id=$1 RETURNING id",[e2])).rows.length,1);assert.equal((await db.query('SELECT * FROM sessions')).rows.length,0);
+await db.exec('RESET ROLE');await db.close();await mkdir('artifacts',{recursive:true});await writeFile('artifacts/rls-results.json',JSON.stringify({status:'PASS',checks:['buyer sees own event','buyer cannot edit','partner sees only own organization','cross-tenant denied','partner updates own event','sessions deny raw client'],database:'fresh in-memory PostgreSQL/PGlite'},null,2));console.log('RLS: 6 assertions passed on fresh migrated non-owner database role.');

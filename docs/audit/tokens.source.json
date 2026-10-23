@@ -1,0 +1,84 @@
+{
+  "verified": true,
+  "source_project": "C:/Users/user/Music/BOOKING",
+  "source_commit": "91c4ccecdade7399c46c2bea13e11743da53088b",
+  "retrieved_at": "2026-10-23T06:00:47.265Z",
+  "tokens": [
+    {
+      "source": "--paper",
+      "target": "--paper",
+      "value": "#FEFCFA",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 11
+    },
+    {
+      "source": "--ink",
+      "target": "--ink",
+      "value": "#1A1523",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 12
+    },
+    {
+      "source": "--muted",
+      "target": "--muted",
+      "value": "#7E7487",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 13
+    },
+    {
+      "source": "--line",
+      "target": "--line",
+      "value": "#EFEAF2",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 14
+    },
+    {
+      "source": "--olive",
+      "target": "--purple",
+      "value": "#682692",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 15
+    },
+    {
+      "source": "--brand-deep",
+      "target": "--primary",
+      "value": "#A51E61",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 21
+    },
+    {
+      "source": "--plum",
+      "target": "--plum",
+      "value": "#2D1245",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 22
+    },
+    {
+      "source": "--soft",
+      "target": "--soft",
+      "value": "#FAF6FC",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 18
+    },
+    {
+      "source": "--lavender",
+      "target": "--lavender",
+      "value": "#EFE4F5",
+      "file": "C:/Users/user/Music/BOOKING/src/app/globals.css",
+      "line": 23
+    }
+  ],
+  "fonts": [
+    {
+      "family": "Plus Jakarta Sans",
+      "file": "C:/Users/user/Music/BOOKING/src/app/layout.tsx",
+      "line": 7
+    },
+    {
+      "family": "Playfair Display",
+      "file": "C:/Users/user/Music/BOOKING/src/app/layout.tsx",
+      "line": 14
+    }
+  ],
+  "adaptation": "Muted darkened from #7E7487 to #706477 for readability. Fontsource variable Latin subsets locally bundled."
+}

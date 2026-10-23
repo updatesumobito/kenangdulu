@@ -1,0 +1,17 @@
+CREATE INDEX IF NOT EXISTS display_tokens_event_idx ON display_tokens(event_id);
+CREATE INDEX IF NOT EXISTS documents_order_idx ON documents(order_id);
+CREATE INDEX IF NOT EXISTS entitlement_actor_idx ON entitlement_changes(actor_id);
+CREATE INDEX IF NOT EXISTS entitlement_event_idx ON entitlement_changes(event_id);
+CREATE INDEX IF NOT EXISTS frame_assets_event_idx ON frame_assets(event_id);
+CREATE INDEX IF NOT EXISTS frames_event_idx ON frames(event_id);
+CREATE INDEX IF NOT EXISTS guest_sessions_event_idx ON guest_sessions(event_id);
+CREATE INDEX IF NOT EXISTS guest_sessions_guest_idx ON guest_sessions(guest_id);
+CREATE INDEX IF NOT EXISTS intents_guest_idx ON intents(guest_id);
+CREATE INDEX IF NOT EXISTS jobs_user_idx ON jobs(user_id);
+CREATE INDEX IF NOT EXISTS members_user_idx ON members(user_id);
+CREATE INDEX IF NOT EXISTS orders_org_idx ON orders(org_id);
+CREATE INDEX IF NOT EXISTS orders_plan_idx ON orders(plan_id);
+CREATE INDEX IF NOT EXISTS reports_media_idx ON reports(media_id);
+CREATE INDEX IF NOT EXISTS requests_order_idx ON requests(order_id);
+CREATE INDEX IF NOT EXISTS requests_user_idx ON requests(user_id);
+CREATE INDEX IF NOT EXISTS templates_creator_idx ON templates(created_by);

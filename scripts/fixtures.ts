@@ -1,0 +1,11 @@
+import sharp from 'sharp';
+import ffmpeg from 'ffmpeg-static';
+import {execFileSync} from 'node:child_process';
+import {mkdir} from 'node:fs/promises';
+await mkdir('tests/fixtures',{recursive:true});
+await sharp({create:{width:640,height:480,channels:3,background:'#a56b90'}}).jpeg().toFile('tests/fixtures/photo.jpg');
+await sharp({create:{width:640,height:480,channels:3,background:'#416c61'}}).png().toFile('tests/fixtures/alternate.png');
+await sharp({create:{width:640,height:480,channels:3,background:'#a56b90'}}).withExif({IFD0:{Artist:'Synthetic private metadata',Copyright:'Test only'}}).jpeg().toFile('tests/fixtures/exif.jpg');
+for(const sec of [1,16])execFileSync(ffmpeg!,['-y','-f','lavfi','-i','testsrc=size=320x240:rate=12','-f','lavfi','-i','sine=frequency=440:sample_rate=44100','-t',String(sec),'-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart','tests/fixtures/video-'+sec+'s.mp4'],{stdio:'ignore',timeout:30000});
+execFileSync(ffmpeg!,['-y','-f','lavfi','-i','sine=frequency=440:sample_rate=44100','-t','1','-c:a','aac','tests/fixtures/voice.m4a'],{stdio:'ignore',timeout:30000});
+console.log('Synthetic non-PII image, audio and video fixtures generated.');

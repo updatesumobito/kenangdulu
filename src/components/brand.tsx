@@ -1,0 +1,4 @@
+import Link from 'next/link';
+export function Brand(){return <Link className="brand" href="/">komukuna<span>VIRTUAL · MEMORY EXPERIENCE</span></Link>}
+export function Header(){return <header className="header wrap"><Brand/><nav aria-label="Navigasi utama"><Link href="/fitur">Fitur</Link><Link href="/harga">Paket & harga</Link><Link href="/untuk-vendor">Untuk WO</Link><Link href="/contoh">Demo</Link></nav><Link className="button outline" href="/masuk">Masuk <span>↗</span></Link></header>}
+export function Footer(){return <footer className="wrap footer"><Brand/><p>Kenangan kecil. Berarti selamanya.</p><div><Link href="/panduan">Panduan</Link><Link href="/legal">Privasi & ketentuan</Link><Link href="/kontak">Hubungi kami</Link></div><small>© {new Date().getFullYear()} Komukuna Virtual</small></footer>}

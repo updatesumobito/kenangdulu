@@ -1,0 +1,1 @@
+ALTER TABLE events ADD COLUMN IF NOT EXISTS legal_hold boolean NOT NULL DEFAULT false;

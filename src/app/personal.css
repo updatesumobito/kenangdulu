@@ -1,0 +1,36 @@
+/* Independently mapped from KOMUKUNA/app/wahyu-novita/design-tokens.css. */
+body[data-app-mode='personal'],.theme-maroon-romance{
+ --paper:#f9f6f0;--ink:#391716;--muted:#75645f;--line:#e3d6c8;
+ --primary:#6a0c12;--primary-hover:#711820;--plum:#391716;
+ --soft:#f5e8dd;--purple:#6a0c12;--lavender:#f5e8dd;
+ --event-ink:#391716;--event-primary:#6a0c12;--event-soft:#f5e8dd;
+ --wedding-hero:#520305;--wedding-gold:#d9bc8e;--wedding-surface:#fffdfc;
+ background:#f9f6f0;color:#391716;
+}
+body[data-app-mode='personal'] .sidebar{background:#520305;color:#fffcf8;border-color:#6a0c12}
+body[data-app-mode='personal'] .sidebar .brand,body[data-app-mode='personal'] .sidebar strong{color:#fffcf8}
+body[data-app-mode='personal'] .sidebar :is(small,.workspace-label,.brand span){color:#d9bc8e}
+body[data-app-mode='personal'] .sidebar nav a{color:#f5e8dd}
+body[data-app-mode='personal'] .sidebar nav a.active,body[data-app-mode='personal'] .sidebar nav a:hover{background:#711820;color:#fffcf8}
+body[data-app-mode='personal'] .card,.theme-maroon-romance .card,.theme-maroon-romance .gallery-card{background:#fffdfc;border-color:#e3d6c8}
+body[data-app-mode='personal'] .outline,.theme-maroon-romance .outline{border-color:#e3d6c8;color:#6a0c12;background:#fffdfc}
+body[data-app-mode='personal'] .badge{background:#f5e8dd;color:#6a0c12}
+.personal-event-list{display:grid;gap:18px;margin:28px 0}.personal-create{max-width:760px;margin-top:30px}
+.theme-maroon-romance .personal-event-hero{position:relative;padding:52px 30px;margin:20px 0 28px;border:1px solid #d9bc8e;border-radius:18px;background:#520305;color:#fffcf8;outline:7px solid #520305}
+.theme-maroon-romance .personal-event-hero:before{content:'';position:absolute;inset:10px;border:1px solid rgba(217,188,142,.4);border-radius:10px;pointer-events:none}
+.theme-maroon-romance .personal-event-hero h1{position:relative;color:#fffcf8;font-size:clamp(43px,8vw,76px);margin:20px 0;line-height:1.08;text-wrap:balance}
+.theme-maroon-romance .personal-event-hero :is(p,small){color:#fffcf8}.theme-maroon-romance .personal-event-hero .eyebrow{color:#d9bc8e}
+.theme-maroon-romance .wedding-divider{width:100px;height:1px;background:#d9bc8e;margin:24px auto}
+.theme-maroon-romance .guest-modes>a{background:#fffdfc;border-color:#e3d6c8;border-radius:12px}
+.theme-maroon-romance .guest-modes>a:hover{background:#f5e8dd;border-color:#cba679}
+.theme-maroon-romance .guest-modes strong{color:#391716}.theme-maroon-romance .guest-modes small{color:#75645f}
+.theme-maroon-romance .guest-modes>a>span:first-child{background:#f5e8dd;color:#6a0c12}
+.theme-maroon-romance .guest-back{color:#6a0c12}.theme-maroon-romance .guest-experience h1{color:#6a0c12}
+.theme-maroon-romance .filter-row button.selected{background:#6a0c12;border-color:#6a0c12;color:white}
+@media(max-width:600px){.theme-maroon-romance .personal-event-hero{padding:40px 20px;margin-inline:5px}.personal-create{padding:22px}}
+
+body[data-app-mode='personal'] .header nav{display:none}
+
+.theme-maroon-romance .personal-event-hero .wedding-hashtag{color:#d9bc8e;letter-spacing:.08em;font-size:12px}
+
+body[data-app-mode='personal'] .notice:not(.error){background:#f5e8dd;border-color:#e3d6c8;color:#391716}

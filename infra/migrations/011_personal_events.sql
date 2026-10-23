@@ -1,0 +1,1 @@
+ALTER TABLE events ADD COLUMN IF NOT EXISTS personal boolean NOT NULL DEFAULT false;

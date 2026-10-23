@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.data/
+.data-perf/
+.data-supabase/
+.next-production/
+test-results/
+playwright-report/
+*.tsbuildinfo
+*.log
+
+# Local verification artifacts and private event handoff
+artifacts/
+docs/implementation/ACARA_WAHYU_NOVITA.md

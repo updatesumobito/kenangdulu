@@ -1,0 +1,18 @@
+# Non-secret example; copy to .env.local only in NEW target project and fill from provider dashboard.
+# Do not copy Mokabooth/BOOKING env files, do not commit actual secrets.
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=komukuna-virtual-private
+R2_PUBLIC_URL=
+WORKER_QUEUE_URL=
+EMAIL_PROVIDER_API_KEY=
+EMAIL_FROM=
+PAYMENT_MODE=manual
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000
+# Optional: no AI service required. Never expose server credentials in NEXT_PUBLIC_*.

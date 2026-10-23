@@ -1,0 +1,4 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {api,Field} from './ui';
+export default function PhotoAssociation({value,onChange,disabled=false}:{value:string,onChange:(value:string)=>void,disabled?:boolean}){const [photos,setPhotos]=useState<any[]>([]);useEffect(()=>{let active=true;api('guest/memories').then(result=>{if(active)setPhotos(result.items)}).catch(()=>{});return()=>{active=false}},[]);return <Field label="Foto pendamping dari kenanganmu (opsional)"><select disabled={disabled} value={value} onChange={ev=>onChange(ev.target.value)}><option value="">Tanpa foto pendamping</option>{photos.map((photo,index)=><option value={photo.id} key={photo.id}>Foto {index+1} · {new Date(photo.created_at).toLocaleTimeString('id-ID')}</option>)}</select><small>Foto mengikuti persetujuan dan moderasinya sendiri. Foto privat tidak ikut ditampilkan ke publik.</small></Field>}

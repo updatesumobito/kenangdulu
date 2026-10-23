@@ -1,0 +1,4 @@
+import {spawn,spawnSync} from 'node:child_process';
+import {openSync} from 'node:fs';
+const seed=spawnSync(process.execPath,['node_modules/tsx/dist/cli.mjs','scripts/seed.ts'],{stdio:'inherit',env:{...process.env,NODE_ENV:'development',DATA_DIR:'.data-perf',DATABASE_URL:'',DATABASE_AUTO_MIGRATE:'1',AUTH_PROVIDER:'local',ENABLE_DEMO:'true'}});if(seed.status!==0)process.exit(seed.status||1);
+const child=spawn(process.execPath,['scripts/runtime.mjs','start'],{detached:true,windowsHide:true,stdio:['ignore',openSync('.perf-server.log','a'),openSync('.perf-server.err.log','a')],env:{...process.env,DATA_DIR:'.data-perf',DATABASE_URL:'',DATABASE_AUTO_MIGRATE:'1',AUTH_PROVIDER:'local',ENABLE_DEMO:'true',PORT:'3137',LOCAL_PREVIEW:'1',APP_URL:'http://127.0.0.1:3137'}});child.unref();console.log('Isolated production preview PID '+child.pid+' on http://127.0.0.1:3137');
