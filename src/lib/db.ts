@@ -11,7 +11,10 @@ async function open():Promise<DB>{
  await mkdir(dataDir,{recursive:true});
  let db:DB;
  if(process.env.DATABASE_URL){
-  const sql=postgres(process.env.DATABASE_URL,{max:process.env.VERCEL?2:5,prepare:false,idle_timeout:20,connect_timeout:15});
+  // Application callers pass JSON text, while existing rows may contain JSON
+  // encoded as a JSON string. Keep writes single-encoded and read both shapes.
+  const jsonType={to:3802,from:[114,3802],serialize:(value:any)=>typeof value==='string'?value:JSON.stringify(value),parse:(value:string)=>{const parsed=JSON.parse(value);if(typeof parsed==='string'){try{return JSON.parse(parsed)}catch{return parsed}}return parsed}};
+  const sql=postgres(process.env.DATABASE_URL,{max:process.env.VERCEL?2:5,prepare:false,idle_timeout:20,connect_timeout:15,types:{json:jsonType}});
   const wrap=(s:any):DB=>({query:async(q,p=[])=>({rows:await s.unsafe(q,p)}),exec:(q)=>s.unsafe(q),transaction:(fn)=>s.begin((t:any)=>fn(wrap(t)))});
   db=wrap(sql);
  }else if(process.env.VERCEL)throw Error('Vercel requires a configured external DATABASE_URL.');
