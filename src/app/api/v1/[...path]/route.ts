@@ -1,3 +1,5 @@
+import {guestSettings} from '@/lib/guest-settings';
+import {guestPath} from '@/lib/guest-path';
 import { NextRequest,NextResponse,after } from 'next/server';
 import { cookies } from 'next/headers';
 import {z} from 'zod';
@@ -232,7 +234,7 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   if(a==='display-tokens'&&method==='POST'){await eventAccess(u,e,'display');if(!e.snapshot.live)fail('PLAN_FEATURE_UNAVAILABLE','Live wall tidak tersedia pada Mini.',403);const b=await body(req);if(b.revoke){await rows('UPDATE display_tokens SET revoked=true WHERE event_id=$1',[e.id]);return ok({revoked:true});}const t=token();await rows("INSERT INTO display_tokens VALUES($1,$2,now()+interval '24 hours',false)",[hash(t),e.id]);return ok({token:t,url:'/live/'+e.id+'#'+t});}
   if(a==='exports'&&method==='POST'){await eventAccess(u,e,'export');if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa ekspor telah berakhir.',410);const b=z.object({book:z.boolean().default(false),bookLimit:z.number().int().min(1).max(300).default(100)}).parse(await body(req));if(b.book&&!e.snapshot.book)fail('PLAN_FEATURE_UNAVAILABLE','Memory Book tersedia pada Celebration/Signature.',403);const id=uid();await rows('INSERT INTO jobs(id,event_id,user_id,kind,payload) VALUES($1,$2,$3,$4,$5)',[id,e.id,u.id,b.book?'book.pdf':'export.zip',json({bookLimit:b.bookLimit})]);startWorker();return ok({id},202);}
   if(a==='qr-kit'&&method==='GET'){
-   await eventAccess(u,e);if(!e.published)fail('EVENT_NOT_READY','QR tersedia setelah publish.',409);const format=url.searchParams.get('format')||'svg',link=(process.env.APP_URL||url.origin)+'/e/'+e.slug;
+   await eventAccess(u,e);if(!e.published)fail('EVENT_NOT_READY','QR tersedia setelah publish.',409);const format=url.searchParams.get('format')||'svg',link=(process.env.APP_URL||url.origin)+guestPath(e.slug);
    if(format==='pdf'&&!e.snapshot.frames)fail('PLAN_FEATURE_UNAVAILABLE','QR PDF tidak tersedia pada Mini.',403);
    if(format==='svg')return new Response(await QRCode.toString(link,{type:'svg',margin:4,errorCorrectionLevel:'M'}),{headers:{'Content-Type':'image/svg+xml','Content-Disposition':'attachment; filename="qr-event.svg"','Cache-Control':'private,no-store'}});
    const png=await QRCode.toBuffer(link,{width:1000,margin:4});if(format==='pdf'){const doc=await PDFDocument.create(),page=doc.addPage([595,842]),img=await doc.embedPng(png);page.drawImage(img,{x:70,y:220,width:455,height:455});return binary(Buffer.from(await doc.save()),'application/pdf','qr-event.pdf');}return binary(png,'image/png','qr-event.png');
@@ -248,7 +250,7 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   if(m[2]==='gallery'&&method==='GET'){if(!await hasCoupleAccess(e.id))fail('COUPLE_CODE_REQUIRED','Masukkan kode pengantin terlebih dahulu.',401);if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa album pengantin telah berakhir.',410);return ok(await gallery(e,url,true));}
  }
  m=p.match(/^public\/events\/([a-z0-9-]+)\/(bootstrap|sessions|gallery)$/);
- if(m){const e=await one('SELECT * FROM events WHERE slug=$1',[m[1]]);if(!e||!e.published)fail('NOT_FOUND','Acara tidak ditemukan.',404);const s=e.published.settings;
+ if(m){const e=await one('SELECT * FROM events WHERE slug=$1',[m[1]]);if(!e||!e.published)fail('NOT_FOUND','Acara tidak ditemukan.',404);const s=guestSettings(e.slug,e.published.settings);
   if(m[2]==='bootstrap'&&method==='GET')return ok({id:e.id,slug:e.slug,name:e.name,start_at:e.start_at,end_at:e.end_at,timezone:e.timezone,status:e.status,snapshot:e.snapshot,settings:s,reveal_at:e.reveal_at,frames:e.published.frames});
   if(m[2]==='sessions'&&method==='POST'){
    await checkLive(e);const b=z.object({name:z.string().min(1).max(80),consent:z.literal(true),code:z.string().max(100).optional()}).parse(await body(req));const existingCookie=(await cookies()).get('kv_device')?.value,device=existingCookie||token();let identityHash=hash(device),verified=false;

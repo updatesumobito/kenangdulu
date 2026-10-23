@@ -1,3 +1,4 @@
+import {guestSettings} from './guest-settings';
 import {hasCoupleAccess} from './couple-access';
 import { database,one,rows,json,DB } from './db';
 import {fail,isPhoto} from './domain';
@@ -34,7 +35,7 @@ export async function reserve(input:any){
   const e=await one('SELECT * FROM events WHERE id=$1 FOR UPDATE',[s.event_id],tx);await checkLive(e);
   await tx.query("UPDATE intents SET state='expired' WHERE event_id=$1 AND state IN ('reserved','uploaded') AND expires_at<now()",[e.id]);
   const old=await one('SELECT * FROM intents WHERE event_id=$1 AND guest_id=$2 AND client_key=$3',[e.id,s.guest_id,input.idempotencyKey],tx);if(old){if(['expired','purged','failed'].includes(old.state))fail('UPLOAD_INTENT_EXPIRED','Unggahan kedaluwarsa. Pilih ulang untuk mencoba lagi.',409);return old;}
-  const kind=input.kind,p=e.snapshot,settings=s.snapshot.settings;
+  const kind=input.kind,p=e.snapshot,settings=guestSettings(e.slug,s.snapshot.settings);
   if(!['disposable_photo','photo_strip','voice','video_wish','gif'].includes(kind))fail('INVALID_KIND','Mode tidak valid.');
   if((kind==='photo_strip'&&!p.frames)||(kind==='gif'&&!p.creative))fail('PLAN_FEATURE_UNAVAILABLE','Mode ini tidak tersedia pada paket acara.',403);
   if(!settings.modes.includes(kind))fail('MODE_DISABLED','Mode tidak diaktifkan.',403);

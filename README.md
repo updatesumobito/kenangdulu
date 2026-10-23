@@ -2,7 +2,7 @@
 
 Full-stack local web implementation. Read [the final report](docs/implementation/FINAL_REPORT.md) for verification and deployment limits.
 
-Supabase is now configured for project `xpwhpeolndmprzmdkldm` in ignored `.env.local`. See [Supabase handoff](docs/implementation/SUPABASE_SETUP.md). The existing local PGlite database is preserved. Current private media storage is still local; R2 and bank details require operator configuration.
+Supabase is now configured for project `xpwhpeolndmprzmdkldm` in ignored `.env.local`. See [Supabase handoff](docs/implementation/SUPABASE_SETUP.md). The existing local PGlite database is preserved. Production private media uses the Supabase storage bridge. See [Vercel deployment](docs/implementation/VERCEL_DEPLOYMENT.md) for the current hosting configuration.
 
 ```powershell
 npm ci

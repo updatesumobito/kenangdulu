@@ -75,6 +75,11 @@ def main():
                 text=next((item.get('text','') for item in result.get('content',[]) if item.get('type')=='text'),'{}')
                 try: parsed=json.loads(text);parsed=parsed.get('result',parsed)
                 except ValueError: parsed={'message':text[:1500]}
+                if action['tool']=='filter_project_envs':
+                    entries=parsed.get('envs',parsed.get('environmentVariables',[]))
+                    parsed={'variables':[{'key':item.get('key'),'target':item.get('target'),'type':item.get('type')} for item in entries]}
+                if action['tool']=='get_deployment':
+                    Path('.data/vercel-current-status-result.json').write_text(json.dumps(parsed))
                 if action['tool']=='create_deployment':
                     Path('.data/vercel-deployment.json').write_text(json.dumps(parsed))
                     parsed=parsed.get('deployment',parsed)
