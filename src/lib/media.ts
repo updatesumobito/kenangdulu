@@ -1,3 +1,4 @@
+import {hasCoupleAccess} from './couple-access';
 import { database,one,rows,json,DB } from './db';
 import {fail,isPhoto} from './domain';
 import {uid,guestSession,currentUser,eventAccess,hash} from './auth';
@@ -93,6 +94,7 @@ export async function finalize(intentId:string){
 export async function mediaAccess(m:any,req?:Request,display=false){
  if(!m||m.moderation==='deleted'||m.moderation==='hidden'||m.processing!=='ready')fail('MEDIA_UNAVAILABLE','Media belum tersedia.',404);
  const e=await one('SELECT * FROM events WHERE id=$1',[m.event_id]);const u=await currentUser();
+ if(await hasCoupleAccess(e.id)){if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa album pengantin telah berakhir.',410);return;}
  if(u){try{await eventAccess(u,e);if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa unduh telah berakhir.',410);return;}catch(err:any){if(err.code!=='FORBIDDEN')throw err}}
  if(display&&req){const d=await one('SELECT * FROM display_tokens WHERE token_hash=$1 AND event_id=$2 AND expires_at>now() AND NOT revoked',[hash(new URL(req.url).searchParams.get('display')||''),e.id]);if(!d)fail('FORBIDDEN','Token layar tidak valid.',403);}
  if(!e.published?.settings.gallery&&!display)fail('FORBIDDEN','Galeri privat.',403);

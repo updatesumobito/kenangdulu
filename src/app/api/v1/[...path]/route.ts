@@ -12,6 +12,7 @@ import {PDFDocument} from 'pdf-lib';
 import sharp from 'sharp';
 import {providerLogin,providerRegister,providerRecovery,providerReset} from '@/lib/supabase-auth';
 import {uploadChunk,uploadProgress} from '@/lib/resumable-upload';
+import {coupleAccessStatus,configureCoupleAccess,hasCoupleAccess,unlockCoupleAccess,lockCoupleAccess} from '@/lib/couple-access';
 export const runtime='nodejs';
 export const maxDuration=300;
 export const dynamic='force-dynamic';
@@ -178,6 +179,11 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
    if(u.role!=='superadmin'&&!await one('SELECT 1 FROM organizations WHERE id=$1 AND owner_id=$2',[e.org_id,u.id]))fail('FORBIDDEN','Hanya pemilik organisasi dapat mencabut undangan.',403);
    const b=z.object({id:uuid}).parse(await body(req));await rows('UPDATE staff_invitations SET revoked=true WHERE id=$1 AND event_id=$2',[b.id,e.id]);await audit(u.id,'event.invitation.revoke',{invitationId:b.id},e.id);return ok({revoked:true});
   }
+  if(a==='couple-access'&&method==='GET'){await eventAccess(u,e,'edit');return ok(await coupleAccessStatus(e.id));}
+  if(a==='couple-access'&&method==='POST'){
+   await eventAccess(u,e,'edit');const b=z.object({enabled:z.boolean(),code:z.string().min(8).max(64).regex(/^[A-Za-z0-9-]+$/,'Gunakan huruf, angka, dan tanda hubung.').optional()}).parse(await body(req));
+   await configureCoupleAccess(e.id,b.code,b.enabled);await audit(u.id,'event.couple-access',{enabled:b.enabled},e.id);return ok({saved:true,enabled:b.enabled});
+  }
   if(a==='settings'&&method==='PATCH'){
    await eventAccess(u,e,'edit');const b=await body(req),s=settingsSchema.parse(b.settings),p=e.snapshot;
    if(s.perGuest>p.perGuest||s.videoSec>p.videoSec||s.voiceSec>p.voiceSec)fail('PLAN_LIMIT','Pengaturan melewati batas paket.',403);
@@ -234,6 +240,12 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   if(a==='manual-physical-import'&&method==='POST'){
    await admin();await eventAccess(u,e,'edit');return ok(await physicalImport(e,await limitedBody(req,12*1024**2)),201);
   }
+ }
+ m=p.match(/^couple\/events\/([a-z0-9-]+)\/(session|gallery)$/);
+ if(m){const e=await one('SELECT * FROM events WHERE slug=$1',[m[1]]);if(!e?.published)fail('NOT_FOUND','Acara tidak ditemukan.',404);
+  if(m[2]==='session'&&method==='POST'){const b=z.object({code:z.string().min(8).max(64)}).parse(await body(req));await unlockCoupleAccess(e.id,b.code,req);return ok({unlocked:true});}
+  if(m[2]==='session'&&method==='DELETE'){await lockCoupleAccess(e.id);return ok({locked:true});}
+  if(m[2]==='gallery'&&method==='GET'){if(!await hasCoupleAccess(e.id))fail('COUPLE_CODE_REQUIRED','Masukkan kode pengantin terlebih dahulu.',401);if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa album pengantin telah berakhir.',410);return ok(await gallery(e,url,true));}
  }
  m=p.match(/^public\/events\/([a-z0-9-]+)\/(bootstrap|sessions|gallery)$/);
  if(m){const e=await one('SELECT * FROM events WHERE slug=$1',[m[1]]);if(!e||!e.published)fail('NOT_FOUND','Acara tidak ditemukan.',404);const s=e.published.settings;

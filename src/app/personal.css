@@ -34,3 +34,6 @@ body[data-app-mode='personal'] .header nav{display:none}
 .theme-maroon-romance .personal-event-hero .wedding-hashtag{color:#d9bc8e;letter-spacing:.08em;font-size:12px}
 
 body[data-app-mode='personal'] .notice:not(.error){background:#f5e8dd;border-color:#e3d6c8;color:#391716}
+
+/* Couple album shares the guest event theme. */
+.couple-code-form{max-width:480px;margin:28px auto;text-align:left}.couple-memories{text-align:left;margin-top:32px}.couple-album .gallery-grid{grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}.couple-album .gallery-toolbar{display:flex;flex-wrap:wrap;gap:12px}.couple-album .gallery-toolbar .field{flex:1;min-width:140px}.couple-album footer{margin-top:40px}
