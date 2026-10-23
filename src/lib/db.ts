@@ -6,6 +6,12 @@ import path from 'node:path';
 export type Row = Record<string, any>;
 export interface DB { query<T extends Row = Row>(sql:string, params?:any[]):Promise<{rows:T[]}>; exec(sql:string):Promise<any>; transaction<T>(fn:(tx:DB)=>Promise<T>):Promise<T> }
 const g=globalThis as typeof globalThis & {kvdb?:Promise<DB>};
+function decodeJson(value:any):any {
+ if(typeof value==='string'&&/^[\[{]/.test(value.trim())){try{return decodeJson(JSON.parse(value))}catch{return value}}
+ if(Array.isArray(value))return value.map(decodeJson);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,decodeJson(item)]));
+ return value;
+}
 export const dataDir=path.resolve(process.env.VERCEL?'/tmp/komukuna-virtual':process.env.DATA_DIR||'.data');
 async function open():Promise<DB>{
  await mkdir(dataDir,{recursive:true});
@@ -13,7 +19,7 @@ async function open():Promise<DB>{
  if(process.env.DATABASE_URL){
   // Application callers pass JSON text, while existing rows may contain JSON
   // encoded as a JSON string. Keep writes single-encoded and read both shapes.
-  const jsonType={to:3802,from:[114,3802],serialize:(value:any)=>typeof value==='string'?value:JSON.stringify(value),parse:(value:string)=>{const parsed=JSON.parse(value);if(typeof parsed==='string'){try{return JSON.parse(parsed)}catch{return parsed}}return parsed}};
+  const jsonType={to:3802,from:[114,3802],serialize:(value:any)=>typeof value==='string'?value:JSON.stringify(value),parse:(value:string)=>decodeJson(JSON.parse(value))};
   const sql=postgres(process.env.DATABASE_URL,{max:process.env.VERCEL?2:5,prepare:false,idle_timeout:20,connect_timeout:15,types:{json:jsonType}});
   const wrap=(s:any):DB=>({query:async(q,p=[])=>({rows:await s.unsafe(q,p)}),exec:(q)=>s.unsafe(q),transaction:(fn)=>s.begin((t:any)=>fn(wrap(t)))});
   db=wrap(sql);
