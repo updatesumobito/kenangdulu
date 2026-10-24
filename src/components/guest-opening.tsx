@@ -10,6 +10,8 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  const {setIntroOpen}=useGuestAppearance();
  const [phase,setPhase]=useState<'idle'|'opening'|'entered'>('idle'),[ready,setReady]=useState(false),[step,setStep]=useState(0),[visible,setVisible]=useState(true),[reduced,setReduced]=useState(false),[paused,setPaused]=useState(false),[phoneScale,setPhoneScale]=useState(.75);
  const content=useRef<HTMLDivElement>(null),scene=useRef<HTMLDivElement>(null),enterButton=useRef<HTMLButtonElement>(null);
+ const [motionEnabled,setMotionEnabled]=useState(false);
+ const gentleMotion=reduced&&!motionEnabled;
  const steps:Step[]=[{id:'name',label:'Isi nama',title:'Kenalan dulu, yuk.',description:'Isi namamu dan setujui penyimpanan kenangan sebelum mulai. Kalau diminta, masukkan juga kode undangan.'}];
  if(modes.some(mode=>['disposable_photo','photo_strip','gif'].includes(mode)))steps.push({id:'camera',label:'Jepret',title:'Senyum. Jepret. Simpan.',description:'Pilih mode kamera, izinkan akses, lalu ambil foto. Bisa ganti kamera depan atau belakang dan ulangi sampai kamu suka.'});
  if(modes.includes('voice'))steps.push({id:'voice',label:'Pesan suara',title:'Ada doa yang ingin didengar.',description:'Buka Pesan suara, izinkan mikrofon, lalu rekam. Dengarkan kembali, simpan ke draft, lalu lanjut ke langkah berikutnya.'});
@@ -42,9 +44,10 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
   resize();const observer=new ResizeObserver(resize);observer.observe(element);return()=>observer.disconnect();
  },[phase]);
  function enter(){if(phase==='idle')setPhase('opening')}
+ function toggleMotion(){if(gentleMotion){setMotionEnabled(true);setPaused(false)}else setPaused(value=>!value)}
  return <>
-  {phase!=='entered'&&<section className="guest-opening" data-phase={phase} data-reduced={reduced} data-paused={paused||!visible} aria-labelledby="opening-title" onKeyDown={ev=>{if(ev.key==='Escape')setPhase('entered')}}>
-   <header className="tutorial-top"><span>kenang dulu <small>THE MEMORY ARCHIVE</small></span><div className="tutorial-header-actions"><button type="button" className="opening-motion-toggle" onClick={()=>setPaused(value=>!value)} aria-label={paused?'Lanjutkan gerakan dan panduan':'Jeda gerakan dan panduan'} aria-pressed={paused}>{paused?<Play size={17}/>:<Pause size={17}/>}</button><GuestThemeToggle/></div></header>
+  {phase!=='entered'&&<section className="guest-opening" data-phase={phase} data-reduced={reduced} data-motion={gentleMotion?'gentle':'full'} data-paused={paused||!visible} aria-labelledby="opening-title" onKeyDown={ev=>{if(ev.key==='Escape')setPhase('entered')}}>
+   <header className="tutorial-top"><span>kenang dulu <small>THE MEMORY ARCHIVE</small></span><div className="tutorial-header-actions"><button type="button" className="opening-motion-toggle" onClick={toggleMotion} aria-label={gentleMotion?'Aktifkan animasi penuh':paused?'Lanjutkan gerakan dan panduan':'Jeda gerakan dan panduan'} aria-pressed={!gentleMotion&&!paused}>{gentleMotion||paused?<Play size={17}/>:<Pause size={17}/>}<span>{gentleMotion?'Aktifkan animasi':paused?'Lanjutkan animasi':'Jeda animasi'}</span></button><GuestThemeToggle/></div></header>
    <div className="opening-composition">
     <div className="opening-heading"><p className="eyebrow">SELAMAT DATANG DI HARI BAHAGIA KAMI</p><h1 id="opening-title">{name}</h1><p className="opening-tagline">Simpan momen.<br/><em>Titipkan doa.</em></p><small>{date}{hashtag&&<> · {hashtag}</>}</small>
      <p className="opening-intro">Foto, suara, dan doa terbaikmu. Kenangan kecil yang akan selalu berarti.</p>
