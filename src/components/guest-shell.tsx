@@ -21,7 +21,7 @@ export default function GuestShell({event,activeMode='home',navigation=true,bran
   update();media.addEventListener('change',update);window.addEventListener('storage',update);
   return()=>{media.removeEventListener('change',update);window.removeEventListener('storage',update)};
  },[]);
- function applyTheme(next:boolean){document.documentElement.dataset.guestTheme=next?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',next?'#1d2320':'#f2eee8')}
+ function applyTheme(next:boolean){document.documentElement.dataset.guestTheme=next?'dark':'light';const maroon=event.slug==='wahyu-novita';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',maroon?(next?'#171315':'#f8f5f0'):(next?'#1d2320':'#f2eee8'))}
  function toggle(){const next=!dark;setDark(next);applyTheme(next);try{localStorage.setItem('komukuna-guest-theme',next?'dark':'light')}catch{}}
  const base=guestPath(event.slug),modes:string[]=event.settings.modes;
  const camera=modes.includes('disposable_photo')?'disposable':modes.includes('photo_strip')?'photo':modes.includes('gif')?'creative':null;
@@ -31,7 +31,7 @@ export default function GuestShell({event,activeMode='home',navigation=true,bran
   ...(camera?[{id:'camera',label:'Kamera',href:base+'/'+camera,icon:Camera}]:[]),
   ...(modes.includes('wish_card')?[{id:'wish_card',label:'Ucapan',href:base+'/notes',icon:MessageCircle}]:[]),
   ...(event.settings.gallery?[{id:'gallery',label:'Galeri',href:base+'/gallery',icon:Images}]:[])];
- return <AppearanceContext.Provider value={{dark,toggle,setIntroOpen}}><div className={'guest-page guest-shell theme-'+event.settings.theme} data-intro-open={introOpen} data-navigation={navigation}>
+ return <AppearanceContext.Provider value={{dark,toggle,setIntroOpen}}><div className={'guest-page guest-shell theme-'+event.settings.theme} data-event-slug={event.slug} data-intro-open={introOpen} data-navigation={navigation}>
   <header className="guest-app-header" inert={introOpen} aria-hidden={introOpen||undefined}>
    <Link className="guest-app-brand" href={brandHref||base} aria-label={brandHref?'Album pengantin '+event.name:'Kembali ke acara '+event.name}><span className="guest-brand-mark"><Heart size={18} strokeWidth={1.5}/></span><span>kenang dulu<small>THE MEMORY ARCHIVE</small></span></Link>
    <div className="guest-header-end"><span className="guest-header-event">{event.name}</span><GuestThemeToggle/></div>

@@ -10,5 +10,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Preferensi pengguna
 
+- Khusus acara `wahyu-novita`, pertahankan palet maroon, ivory, dan gold asli. Warna acara ini tidak mengikuti `design (3).md` atau palet Heritage Moss.
 - Auto-deploy Vercel dari Git diizinkan atas permintaan pengguna. Push ke branch yang terhubung boleh memicu deployment otomatis tanpa konfirmasi deploy terpisah. Gunakan preview lokal selama pengerjaan.
 - Jalankan pemeriksaan hanya untuk error yang ditemukan/dilaporkan atau yang diwajibkan instruksi berprioritas lebih tinggi; jangan menjalankan suite, build lokal, lint, typecheck atau pemeriksaan browser rutin.

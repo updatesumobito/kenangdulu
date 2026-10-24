@@ -1,0 +1,49 @@
+/* Wahyu–Novita keeps its original maroon, ivory and gold palette.
+   These event-scoped colors are independent of the shared Heritage design. */
+.guest-shell.guest-page[data-event-slug='wahyu-novita']{
+ --color-bg:#f8f5f0;--color-bg-subtle:#f4e7e7;
+ --color-surface:#fffdf9;--color-surface-raised:#fff;
+ --color-primary:#701c34;--color-primary-hover:#5c182b;--color-primary-active:#4b1223;--color-primary-foreground:#fffaf6;
+ --color-text:#35232c;--color-text-secondary:#655158;--color-text-muted:#7c6669;
+ --color-border:#e8ddd5;--color-border-strong:#cdb5bb;--color-control-border:#9e858c;
+ --color-interactive-text:#701c34;--color-accent:#977443;--color-accent-strong:#70522a;--color-accent-subtle:#f3e8de;--color-focus:#701c34;--color-overlay:rgba(53,20,33,.48);
+ --color-danger:#8c1730;--color-danger-bg:#fff0f1;--color-danger-border:#ae4a55;
+ --color-success:#26523d;--color-success-bg:#edf7ef;
+ --color-media-bg:#23171e;--color-media-text:#efdfd9;--color-media-muted:#cdb5bb;
+ --g-bg:var(--color-bg);--g-surface:var(--color-surface);--g-raised:var(--color-surface-raised);
+ --g-ink:var(--color-text);--g-muted:var(--color-text-secondary);--g-line:var(--color-border);
+ --g-accent:var(--color-primary);--g-on-accent:var(--color-primary-foreground);--g-soft:var(--color-bg-subtle);--g-gold:var(--color-accent-strong);--g-control-line:var(--color-control-border);
+ --g-hero:#f3e8de;--g-shadow:0 14px 45px #4e283609;
+ --gw-mobile-surface:#f4e7e7;--gw-mobile-surface-end:#f8edf0;--gw-mobile-ink:var(--g-ink);--gw-mobile-muted:var(--g-muted);--gw-mobile-line:#e8ced6;--gw-mobile-accent:var(--g-gold);
+ --wn-header-start:#701c34;--wn-header-end:#4f1829;--wn-header-text:#fff9f1;--wn-header-gold:#e6cba1;
+ color-scheme:light;
+}
+html[data-guest-theme='dark'] .guest-shell.guest-page[data-event-slug='wahyu-novita']{
+ --color-bg:#171315;--color-bg-subtle:#38252e;--color-surface:#231c20;--color-surface-raised:#2d2328;
+ --color-primary:#f1b6c7;--color-primary-hover:#f5c6d2;--color-primary-active:#e9b0b9;--color-primary-foreground:#351421;
+ --color-text:#fff1f5;--color-text-secondary:#d4bbc5;--color-text-muted:#bda8ac;
+ --color-border:#44343c;--color-border-strong:#735563;--color-control-border:#a48a96;
+ --color-interactive-text:#f1b6c7;--color-accent:#d9bd8e;--color-accent-strong:#e6cba1;--color-accent-subtle:#30202a;--color-focus:#f1b6c7;--color-overlay:rgba(0,0,0,.6);
+ --color-danger:#ffd2db;--color-danger-bg:#43212c;--color-danger-border:#bf8692;
+ --color-success:#b9e7c9;--color-success-bg:#20382a;
+ --g-hero:#30202a;--g-shadow:0 14px 45px #00000018;
+ --gw-mobile-surface:#38252e;--gw-mobile-surface-end:#231c20;--gw-mobile-line:#62404e;
+ color-scheme:dark;
+}
+html:has(.guest-shell[data-event-slug='wahyu-novita']){background:#f8f5f0}
+html[data-guest-theme='dark']:has(.guest-shell[data-event-slug='wahyu-novita']){background:#171315}
+.guest-shell[data-event-slug='wahyu-novita'] .gw-camera-idle{background:linear-gradient(155deg,#4a1d2c,#171315)}
+.guest-shell[data-event-slug='wahyu-novita'] .gw-camera-idle button{background:#fff9f1;color:#701c34}
+.guest-shell[data-event-slug='wahyu-novita'] .gw-video-viewfinder>video{background:var(--color-media-bg)}
+.guest-shell[data-event-slug='wahyu-novita'] .gw-remove{background:rgba(53,20,33,.82)}
+@media(max-width:760px){
+ .guest-shell.guest-page[data-event-slug='wahyu-novita'] .guest-app-header{background:linear-gradient(120deg,var(--wn-header-start),var(--wn-header-end));box-shadow:0 8px 22px rgba(53,20,33,.12)}
+ .guest-shell[data-event-slug='wahyu-novita'] .guest-app-header::before{border-color:var(--wn-header-gold)}
+ .guest-shell[data-event-slug='wahyu-novita'] .guest-app-header::after{border-color:#977443}
+ .guest-shell[data-event-slug='wahyu-novita'] .guest-app-header .guest-app-brand,
+ .guest-shell[data-event-slug='wahyu-novita'] .guest-app-header .guest-app-brand small{color:var(--wn-header-text)}
+ .guest-shell[data-event-slug='wahyu-novita'] .guest-app-header .guest-brand-mark{color:var(--wn-header-gold);border-color:color-mix(in srgb,var(--wn-header-gold) 45%,transparent);background:color-mix(in srgb,var(--wn-header-text) 7%,transparent)}
+ .guest-shell[data-event-slug='wahyu-novita'] .guest-app-header .guest-theme-toggle{background:color-mix(in srgb,var(--wn-header-text) 10%,transparent)!important;color:var(--wn-header-text);border-color:color-mix(in srgb,var(--wn-header-text) 25%,transparent)}
+ .guest-shell[data-event-slug='wahyu-novita'] .gw-heading::before,
+ .guest-shell[data-event-slug='wahyu-novita'] .gw-heading::after{border-color:var(--g-gold)}
+}
