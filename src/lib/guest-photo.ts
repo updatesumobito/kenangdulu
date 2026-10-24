@@ -2,14 +2,32 @@ import {containFrame,MEDIA_LIMITS,type MediaPresentation} from './media-presenta
 import {applyPhotoFilter} from './photo-filter';
 
 export class PhotoSizeError extends Error{constructor(message='Foto resolusi penuh melebihi batas. Pilih optimasi atau gunakan foto lain.'){super(message);this.name='PhotoSizeError';}}
-export async function takeCameraPhoto(video:HTMLVideoElement,stream:MediaStream){
- const Capture=(globalThis as unknown as {ImageCapture?:new(track:MediaStreamTrack)=>{takePhoto:()=>Promise<Blob>}}).ImageCapture;
- if(Capture)try{return await new Capture(stream.getVideoTracks()[0]).takePhoto();}catch{/* Video frame fallback keeps the browser's actual dimensions. */}
- if(!video.videoWidth||!video.videoHeight)throw Error('Kamera belum siap.');
- const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d')!.drawImage(video,0,0);
- return encode(c,.96);
+const frameOnlyTracks=new WeakSet<MediaStreamTrack>();
+async function within<T>(operation:Promise<T>,milliseconds:number,message:string){
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ try{return await Promise.race([operation,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error(message)),milliseconds);})]);}
+ finally{clearTimeout(timer);}
 }
-const encode=(canvas:HTMLCanvasElement,quality:number)=>new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Foto tidak dapat disiapkan.')),'image/jpeg',quality));
+export async function takeCameraPhoto(video:HTMLVideoElement,stream:MediaStream){
+ const track=stream.getVideoTracks()[0];
+ if(!track||track.readyState!=='live'||!video.videoWidth||!video.videoHeight||video.readyState<2)throw Error('Kamera belum siap. Buka kembali kamera lalu coba lagi.');
+ // Keep the shutter frame before native capture can temporarily pause the camera.
+ const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
+ const context=c.getContext('2d');if(!context)throw Error('Foto tidak dapat disiapkan. Coba buka ulang kamera.');context.drawImage(video,0,0);
+ const Capture=(globalThis as unknown as {ImageCapture?:new(track:MediaStreamTrack)=>{takePhoto:()=>Promise<Blob>}}).ImageCapture;
+ // Native still capture can pause the same mobile track used by the preview,
+ // and cannot be cancelled when a phone's camera driver stops responding.
+ const touchCamera=typeof matchMedia==='function'&&matchMedia('(pointer: coarse)').matches;
+ try{
+  if(Capture&&!touchCamera&&!frameOnlyTracks.has(track))try{
+   const photo=await within(new Capture(track).takePhoto(),2000,'Kamera native belum merespons.');
+   if(photo.size)return photo;
+   frameOnlyTracks.add(track);
+  }catch{frameOnlyTracks.add(track);}
+  return await encode(c,.96);
+ }finally{c.width=c.height=1;}
+}
+const encode=(canvas:HTMLCanvasElement,quality:number)=>within(new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Foto tidak dapat disiapkan.')),'image/jpeg',quality)),10000,'Foto belum dapat disiapkan. Coba jepret lagi.');
 async function filterPixels(data:ImageData,css:string){
  if(css==='none')return data;
  if(typeof Worker!=='undefined'){
@@ -31,7 +49,7 @@ async function filterPixels(data:ImageData,css:string){
 export async function prepareGuestPhoto(blob:Blob,presentation:MediaPresentation,css='none',timestamp?:string){
  const url=URL.createObjectURL(blob),image=new Image();
  try{
-  image.src=url;await image.decode();const native=containFrame(image.naturalWidth,image.naturalHeight,presentation.ratio);
+  image.src=url;await within(image.decode(),10000,'Foto belum dapat dibaca. Coba jepret lagi.');const native=containFrame(image.naturalWidth,image.naturalHeight,presentation.ratio);
   if(!presentation.optimized&&(native.width*native.height>MEDIA_LIMITS.photoPixels||blob.size>MEDIA_LIMITS.photoBytes))throw new PhotoSizeError();
   const scale=presentation.optimized?Math.min(1,2400/Math.max(native.width,native.height)):1;
   const frame=containFrame(image.naturalWidth,image.naturalHeight,presentation.ratio,scale);
