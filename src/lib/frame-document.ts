@@ -19,7 +19,7 @@ export type FrameSlot=Extract<FrameObject,{kind:'slot'}>;
 export const mmToPx=(mm:number,dpi:number)=>mm*dpi/25.4;
 export const pxToMm=(px:number,dpi:number)=>px*25.4/dpi;
 export function outputSize(doc:FrameDocumentV2){return {width:Math.round(mmToPx(doc.page.width,doc.page.dpi)),height:Math.round(mmToPx(doc.page.height,doc.page.dpi))};}
-export function captureSources(frame:any){
+export function captureSources(frame:any):{sourceIndex:number;captureOrder:number;guide:string}[]{
  if(frame?.schemaVersion!==2)return (frame?.slots||[]).map((_:unknown,index:number)=>({sourceIndex:index,captureOrder:index+1,guide:'opsional'}));
  const sources=new Map<number,{sourceIndex:number;captureOrder:number;guide:string}>();
  for(const o of frame.objects as FrameObject[])if(o.kind==='slot'){

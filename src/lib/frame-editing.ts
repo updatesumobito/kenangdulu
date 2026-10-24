@@ -8,7 +8,7 @@ export function bounds(objects:FrameObject[]){const boxes=objects.map(o=>worldBo
 export function alignObjects(doc:FrameDocumentV2,ids:string[],action:string,page=false):FrameDocumentV2{
  const selected=doc.objects.filter(o=>ids.includes(o.id)&&!o.locked);if(!selected.length)return doc;
  const area=page?{x:0,y:0,w:doc.page.width,h:doc.page.height}:bounds(selected),first=selected[0];
- const patches=new Map<string,Partial<FrameObject>>();
+ const patches=new Map<string,Partial<Pick<FrameObject,'x'|'y'|'w'|'h'>>>();
  if(action==='distribute-x'||action==='distribute-y'){
   if(selected.length<3)return doc;const horizontal=action==='distribute-x',ordered=[...selected].sort((a,b)=>horizontal?a.x-b.x:a.y-b.y),space=((horizontal?area.w:area.h)-ordered.reduce((n,o)=>n+(horizontal?worldBounds(o).w:worldBounds(o).h),0))/(ordered.length-1);let cursor=horizontal?area.x:area.y;
   for(const o of ordered){const b=worldBounds(o);patches.set(o.id,horizontal?{x:o.x+cursor-b.x}:{y:o.y+cursor-b.y});cursor+=(horizontal?b.w:b.h)+space;}
