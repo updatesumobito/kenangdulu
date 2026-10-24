@@ -10,7 +10,6 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  const {setIntroOpen}=useGuestAppearance();
  const [phase,setPhase]=useState<'idle'|'opening'|'entered'>('idle'),[ready,setReady]=useState(false),[step,setStep]=useState(0),[visible,setVisible]=useState(true),[reduced,setReduced]=useState(false),[paused,setPaused]=useState(false),[phoneScale,setPhoneScale]=useState(.75);
  const content=useRef<HTMLDivElement>(null),scene=useRef<HTMLDivElement>(null),enterButton=useRef<HTMLButtonElement>(null);
- const storageKey='komukuna-welcome-floating-v5:'+name+':'+date;
  const steps:Step[]=[{id:'name',label:'Isi nama',title:'Kenalan dulu, yuk.',description:'Isi namamu dan setujui penyimpanan kenangan sebelum mulai. Kalau diminta, masukkan juga kode undangan.'}];
  if(modes.some(mode=>['disposable_photo','photo_strip','gif'].includes(mode)))steps.push({id:'camera',label:'Jepret',title:'Senyum. Jepret. Simpan.',description:'Pilih mode kamera, izinkan akses, lalu ambil foto. Bisa ganti kamera depan atau belakang dan ulangi sampai kamu suka.'});
  if(modes.includes('voice'))steps.push({id:'voice',label:'Pesan suara',title:'Ada doa yang ingin didengar.',description:'Buka Pesan suara, izinkan mikrofon, lalu rekam. Dengarkan kembali, simpan ke draft, lalu lanjut ke langkah berikutnya.'});
@@ -18,7 +17,7 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  if(modes.includes('wish_card'))steps.push({id:'note',label:'Tulis doa',title:'Sedikit kata, banyak makna.',description:'Tulis doa atau cerita kecil. Ucapanmu disimpan secara pribadi untuk pengantin.'});
  steps.push({id:'send',label:'Kirim',title:'Satu kiriman, satu kenangan.',description:'Periksa semua foto, suara, dan ucapanmu, lalu kirim secara pribadi untuk pengantin. Tunggu konfirmasi bahwa kenanganmu sudah tersimpan.'});
  const current=steps[Math.min(step,steps.length-1)];
- useEffect(()=>{try{if(sessionStorage.getItem(storageKey))setPhase('entered')}catch{}setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[storageKey]);
+ useEffect(()=>{setPhase('idle');setStep(0);setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[name,date]);
  useEffect(()=>{
   if(!ready||phase==='entered')return;
   const bodyOverflow=document.body.style.overflow,rootOverflow=document.documentElement.style.overflow;
@@ -29,9 +28,8 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  useEffect(()=>{if(phase!=='opening')return;const timer=setTimeout(()=>setPhase('entered'),reduced?120:220);return()=>clearTimeout(timer)},[phase,reduced]);
  useEffect(()=>{
   if(phase!=='entered')return;
-  try{sessionStorage.setItem(storageKey,'1')}catch{}
   content.current?.querySelector<HTMLElement>('h1')?.focus({preventScroll:true});
- },[phase,storageKey]);
+ },[phase]);
  useEffect(()=>{
   if(!ready||phase!=='idle'||!visible||paused||reduced)return;
   const timer=setTimeout(()=>setStep(value=>(value+1)%steps.length),4000);
