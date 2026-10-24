@@ -23,6 +23,13 @@
 .guest-shell .guest-opening .tutorial-phone-fit {position:absolute;width:218px;height:350px;left:50%;top:48%;transform-origin:center;pointer-events:none}
 .guest-shell .guest-opening .tutorial-phone-motion {width:100%;height:100%;animation:welcome-phone-float 6s var(--opening-fold) infinite}
 .guest-shell .guest-opening .tutorial-phone {position:relative;inset:auto;width:218px;height:350px;transform:none;transform-origin:center;animation:none}
+/* Keep the demonstrations alive after their entrance, including the last step. */
+.guest-shell .guest-opening .demo-input>i {animation-iteration-count:infinite}
+.guest-shell .guest-opening .demo-voice .demo-round {animation:voice-breathe 1s var(--opening-fold) infinite}
+.guest-shell .guest-opening .demo-wave i {animation:demo-wave 750ms var(--opening-fold) infinite alternate}
+.guest-shell .guest-opening .demo-person {animation:welcome-person-sway 3s var(--opening-fold) infinite}
+.guest-shell .guest-opening .demo-shutter>span {animation:voice-breathe 1s var(--opening-fold) infinite}
+.guest-shell .guest-opening .demo-note-paper svg,.guest-shell .guest-opening .demo-send>svg {animation:voice-breathe 2s var(--opening-fold) infinite}
 .guest-shell .guest-opening .phone-screen {padding:14px}
 .guest-shell .guest-opening .phone-screen small {font-size:7px;line-height:1.5;letter-spacing:.06em}
 .guest-shell .guest-opening .phone-screen h3 {font-size:24px;line-height:1.15;color:var(--color-interactive-text)}
@@ -72,6 +79,7 @@
 @keyframes welcome-phone-float {0%,100%{transform:translate3d(-4px,8px,0) rotate(-5deg)}50%{transform:translate3d(6px,-12px,0) rotate(1deg)}}
 @keyframes welcome-card-float {0%,100%{transform:translate3d(0,4px,0) rotate(4deg)}50%{transform:translate3d(-7px,-10px,0) rotate(-1deg)}}
 @keyframes welcome-card-sway {0%,100%{transform:translate3d(-3px,6px,0) rotate(-4deg)}50%{transform:translate3d(7px,-8px,0) rotate(1deg)}}
+@keyframes welcome-person-sway {0%,100%{transform:translate3d(-3px,0,0) rotate(-2deg)}50%{transform:translate3d(3px,-3px,0) rotate(2deg)}}
 @media(max-width:760px) and (min-height:501px) {
  .guest-shell .guest-opening {grid-template-rows:auto minmax(0,1fr) auto;padding:max(10px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
  .guest-shell .guest-opening .tutorial-top {min-height:44px;padding:0 0 6px}

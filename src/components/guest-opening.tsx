@@ -17,7 +17,7 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  if(modes.includes('wish_card'))steps.push({id:'note',label:'Tulis doa',title:'Sedikit kata, banyak makna.',description:'Tulis doa atau cerita kecil. Ucapanmu disimpan secara pribadi untuk pengantin.'});
  steps.push({id:'send',label:'Kirim',title:'Satu kiriman, satu kenangan.',description:'Periksa semua foto, suara, dan ucapanmu, lalu kirim secara pribadi untuk pengantin. Tunggu konfirmasi bahwa kenanganmu sudah tersimpan.'});
  const current=steps[Math.min(step,steps.length-1)];
- useEffect(()=>{setPhase('idle');setStep(0);setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[name,date]);
+ useEffect(()=>{setPhase('idle');setStep(0);setPaused(false);setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[name,date]);
  useEffect(()=>{
   if(!ready||phase==='entered')return;
   const bodyOverflow=document.body.style.overflow,rootOverflow=document.documentElement.style.overflow;
@@ -31,10 +31,10 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
   content.current?.querySelector<HTMLElement>('h1')?.focus({preventScroll:true});
  },[phase]);
  useEffect(()=>{
-  if(!ready||phase!=='idle'||!visible||paused||reduced)return;
-  const timer=setTimeout(()=>setStep(value=>(value+1)%steps.length),4000);
+  if(!ready||phase!=='idle'||!visible||paused||step>=steps.length-1)return;
+  const timer=setTimeout(()=>setStep(value=>Math.min(value+1,steps.length-1)),4000);
   return()=>clearTimeout(timer);
- },[ready,phase,visible,paused,reduced,step,steps.length]);
+ },[ready,phase,visible,paused,step,steps.length]);
  useEffect(()=>{setIntroOpen(phase!=='entered');return()=>setIntroOpen(false)},[phase,setIntroOpen]);
  useEffect(()=>{
   const element=scene.current;if(!element||phase==='entered')return;
@@ -72,6 +72,6 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
    <div className="opening-actions"><div className="opening-invitation"><button ref={enterButton} className="opening-enter" onClick={enter} disabled={phase==='opening'}>Mulai buat kenangan <ArrowRight size={17}/></button><small>Kamera & mikrofon hanya aktif saat kamu memilihnya.</small></div><span className="opening-actions-note"><Heart size={13}/> Kenangan kecil, berarti besar.</span></div>
    <footer><span>TAKE A MOMENT. MAKE A MEMORY.</span><span>{hashtag||'KEPT WITH KENANG DULU'}</span></footer>
   </section>}
-  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
+  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPaused(false);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
  </>;
 }
