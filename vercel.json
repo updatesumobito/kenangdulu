@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "buildCommand": "npm run build",
   "regions": ["bom1"]
