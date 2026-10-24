@@ -1,6 +1,7 @@
 import {api,post} from './ui';
-export async function uploadMemory(eventId:string,kind:string,blob:Blob,_consentPublic:boolean,key:string,onProgress:(p:number)=>void,onIntent?:(id:string)=>void){
- const intent=await post('guest/media/intents',{eventId,kind,sizeBytes:blob.size,mimeType:blob.type,idempotencyKey:key,consentPublic:false});onIntent?.(intent.intentId);
+import type {MediaPresentation} from '@/lib/media-presentation';
+export async function uploadMemory(eventId:string,kind:string,blob:Blob,_consentPublic:boolean,key:string,onProgress:(p:number)=>void,onIntent?:(id:string)=>void,presentation?:MediaPresentation){
+ const intent=await post('guest/media/intents',{eventId,kind,sizeBytes:blob.size,mimeType:blob.type,idempotencyKey:key,consentPublic:false,presentation});onIntent?.(intent.intentId);
  if(intent.state!=='finalized'){
   const status=await api('guest/uploads/'+intent.intentId,{cache:'no-store'});
   let offset=status.receivedBytes;

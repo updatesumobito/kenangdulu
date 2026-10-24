@@ -18,6 +18,7 @@ import {uploadChunk,uploadProgress} from '@/lib/resumable-upload';
 import {coupleAccessStatus,configureCoupleAccess,deleteCoupleAccess,hasCoupleAccess,unlockCoupleAccess,lockCoupleAccess} from '@/lib/couple-access';
 import {coupleCodeSchema} from '@/lib/couple-code';
 import {albumIdentity,coupleAlbums,downloadCoupleAlbum,mediaExtension,attachmentHeader} from '@/lib/couple-albums';
+import {mediaPresentationSchema} from '@/lib/media-presentation';
 import {FRAME_CAPABILITIES,frameAssetIds,toFrameDocument,validateFrame} from '@/lib/frame-document';
 import {parseFrame,saveFrame,frameResponse,importFrame} from '@/lib/frame-service';
 import {canExportQrPdf} from '@/lib/qr-entitlement';
@@ -354,6 +355,33 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   const s=await guestSession(),i=await one('SELECT * FROM intents WHERE id=$1 AND guest_id=$2',[uuid.parse(m[1]),s.guest_id]);if(!i)fail('NOT_FOUND','Unggahan tidak ditemukan.',404);if(i.state==='finalized')return ok({uploaded:true});if(!['reserved','uploaded'].includes(i.state)||new Date(i.expires_at)<new Date())fail('UPLOAD_INTENT_EXPIRED','Unggahan kedaluwarsa.',409);const b=await limitedBody(req,Math.min(Number(i.max_bytes),30*1024**2));if(!b.length)fail('INVALID_MEDIA','Berkas kosong.');await storage.put(i.object_key,b,i.mime);await rows("UPDATE intents SET state='uploaded' WHERE id=$1 AND state IN ('reserved','uploaded')",[i.id]);return ok({uploaded:true});
  }
  m=p.match(/^guest\/(?:media|video)\/([\w-]+)\/finalize$/);if(m&&method==='POST'){const result=await finalize(uuid.parse(m[1]));startWorker();return ok({id:result.id,processing:result.processing});}
+ m=p.match(/^guest\/media\/([\w-]+)\/(status|file|optimize)$/);
+ if(m){
+  const session=await guestSession(),media=await one('SELECT * FROM media WHERE id=$1 AND guest_id=$2 AND event_id=$3',[uuid.parse(m[1]),session.guest_id,session.event_id]);
+  if(!media||media.kind!=='video_wish'||media.moderation==='deleted')fail('NOT_FOUND','Video tidak ditemukan.',404);
+  const ownerEvent=await event(media.event_id);
+  if(Date.now()>+new Date(ownerEvent.end_at)+ownerEvent.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa unduh sudah berakhir.',410);
+  if(m[2]==='status'&&method==='GET')return ok({processing:media.processing,url:media.processing==='ready'?'/api/v1/guest/media/'+media.id+'/file':undefined,error:media.processing==='failed'?'Hasil video belum dapat disiapkan. Pilih optimasi untuk mencoba kembali.':undefined});
+  if(m[2]==='file'&&method==='GET'){
+   if(media.processing!=='ready')fail('MEDIA_NOT_READY','Video masih disiapkan.',409);
+   const object=await storage.stream(media.object_key);
+   return new Response(object.body as ReadableStream<Uint8Array>,{headers:{'Content-Type':media.mime,'Cache-Control':'private,no-store','Content-Disposition':attachmentHeader('Video-kenangan.mp4'),...(object.bytes?{'Content-Length':String(object.bytes)}:{})}});
+  }
+  if(m[2]==='optimize'&&method==='POST'){
+   const result=await (await database()).transaction(async tx=>{
+    await tx.query('SELECT id FROM events WHERE id=$1 FOR UPDATE',[media.event_id]);
+    const fresh=await one('SELECT * FROM media WHERE id=$1 FOR UPDATE',[media.id],tx);
+    if(fresh.processing!=='failed')return {processing:fresh.processing};
+    const presentation=mediaPresentationSchema.parse({...fresh.snapshot.mediaPresentation,optimized:true});
+    const reservation=await one('SELECT max_bytes FROM intents WHERE id=$1',[fresh.intent_id],tx),budget=await eventBudget(ownerEvent,tx);
+    if(budget.bytes+Number(reservation.max_bytes)>ownerEvent.snapshot.storage)fail('STORAGE_QUOTA_EXCEEDED','Penyimpanan acara belum cukup untuk mencoba kembali.',409);
+    await tx.query("UPDATE intents SET state='finalized' WHERE id=$1",[fresh.intent_id]);
+    await tx.query("UPDATE media SET snapshot=$2,processing='queued' WHERE id=$1",[media.id,json({...fresh.snapshot,mediaPresentation:presentation})]);
+    await tx.query("INSERT INTO jobs(id,event_id,kind,payload) VALUES($1,$2,'media.process',$3)",[uid(),media.event_id,json({mediaId:media.id})]);
+    return {processing:'queued'};
+   });startWorker();return ok(result);
+  }
+ }
  if((p==='guest/notes'||p==='guest/wishes')&&method==='POST'){
   const s=await guestSession(),b=z.object({text:z.string().trim().min(1).max(1500),cardStyle:z.enum(['plain','botanical','romance']).default('plain'),attachmentIds:z.array(uuid).max(3).default([]),idempotencyKey:z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/).optional()}).parse(await body(req));
   const result=await (await database()).transaction(async tx=>{

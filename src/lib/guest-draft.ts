@@ -1,6 +1,7 @@
+import type {MediaPresentation} from './media-presentation';
 export type MemoryKind='disposable_photo'|'photo_strip'|'gif'|'voice'|'video_wish';
 export type WizardStep='name'|'camera'|'voice'|'video'|'note'|'review';
-export type DraftMedia={id:string;key:string;kind:MemoryKind;blob:Blob;duration?:number;mediaId?:string;intentId?:string};
+export type DraftMedia={id:string;key:string;kind:MemoryKind;blob:Blob;duration?:number;mediaId?:string;intentId?:string;presentation?:MediaPresentation;processing?:string;readyUrl?:string;processingError?:string};
 export type GuestDraft={version:1;eventId:string;guestId:string;name:string;consent:boolean;media:DraftMedia[];text:string;noteKey:string;noteId?:string;repairId?:string;confirmed:WizardStep[];videoSkipped:boolean;step:WizardStep;started:boolean;sent:boolean;updatedAt:number};
 export function newGuestDraft(eventId:string,guestId='',name=''):GuestDraft{return {version:1,eventId,guestId,name,consent:false,media:[],text:'',noteKey:crypto.randomUUID(),confirmed:[],videoSkipped:false,step:'name',started:false,sent:false,updatedAt:Date.now()};}
 export function draftMedia(kind:MemoryKind,blob:Blob,duration?:number):DraftMedia{return {id:crypto.randomUUID(),key:crypto.randomUUID(),kind,blob,duration};}
@@ -18,8 +19,9 @@ export const writeGuestDraft=(draft:GuestDraft)=>transact('readwrite',store=>sto
 export function mediaExtension(blob:Blob){const mime=blob.type.split(';')[0];return ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','video/mp4':'mp4','video/quicktime':'mov','video/webm':'webm','audio/mp4':'m4a','audio/webm':'webm','audio/ogg':'ogg','audio/mpeg':'mp3'} as Record<string,string>)[mime]||'bin';}
 export const mediaFilename=(media:DraftMedia,index:number)=>`${media.kind==='voice'?'suara':media.kind==='video_wish'?'video':'foto'}-${String(index+1).padStart(2,'0')}.${mediaExtension(media.blob)}`;
 export function guestDownloadFiles(draft:GuestDraft,eventName:string){
- const files=draft.media.map((media,index)=>({blob:media.blob,filename:mediaFilename(media,index)}));
- if(draft.text.trim())files.push({blob:new Blob([`Untuk ${eventName}\nDari ${draft.name}\n\n${draft.text}\n\nKenangan pribadi untuk pengantin.\n`],{type:'text/plain;charset=utf-8'}),filename:'ucapan.txt'});
+ const files=draft.media.filter(media=>media.kind!=='video_wish'||!media.presentation||!!media.readyUrl).map((media,index)=>({blob:media.blob,filename:media.readyUrl?mediaFilename({...media,blob:new Blob([],{type:'video/mp4'})},index):mediaFilename(media,index),url:media.readyUrl}));
+ if(draft.text.trim())files.push({blob:new Blob([`Untuk ${eventName}\nDari ${draft.name}\n\n${draft.text}\n\nKenangan pribadi untuk pengantin.\n`],{type:'text/plain;charset=utf-8'}),filename:'ucapan.txt',url:undefined});
  return files;
 }
 export function downloadBlob(blob:Blob,filename:string){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),60000);}
+export function downloadGuestFile(file:{blob:Blob;filename:string;url?:string}){if(!file.url){downloadBlob(file.blob,file.filename);return;}const link=document.createElement('a');link.href=file.url;link.download=file.filename;document.body.appendChild(link);link.click();link.remove();}

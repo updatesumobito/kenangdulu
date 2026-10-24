@@ -340,6 +340,8 @@ html[data-guest-theme=dark] .guest-shell:has(.guest-wizard){--gw-nav-bg:var(--g-
 .gw-send-overlay h2{margin:0;font-family:var(--font-display);font-weight:450;font-size:clamp(26px,7vw,34px);line-height:1.2;color:var(--g-ink)}
 .gw-send-overlay h2 em{color:var(--color-interactive-text)}
 .gw-send-overlay small{font-size:11px;line-height:1.7;color:var(--g-muted)}
+.gw-send-overlay[open]{animation:gw-send-enter 200ms var(--guest-ease) both}
+@keyframes gw-send-enter{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .gw-spin{animation:gw-spin 1s linear infinite}
 @keyframes gw-spin{to{transform:rotate(360deg)}}
 .guest-shell .gw-thankyou{max-width:600px;margin:auto;padding:26px 0 10px;gap:18px}
@@ -356,6 +358,9 @@ html[data-guest-theme=dark] .guest-shell:has(.guest-wizard){--gw-nav-bg:var(--g-
 .gw-thanks-receipt>span{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--g-ink);font-weight:650}
 .gw-thanks-receipt>small{font-size:12px;color:var(--g-muted);line-height:1.7}
 .gw-thanks-receipt .gw-private-note{font-size:11px}
+.guest-shell .gw-thankyou>:is(.eyebrow,h1,p,.gw-couple-name,.gw-thanks-receipt,.gw-thankyou-actions){animation:gw-thanks-enter 240ms var(--guest-ease) backwards}
+.gw-thankyou>h1{animation-delay:40ms!important}.gw-thankyou>p,.gw-thankyou>.gw-couple-name{animation-delay:80ms!important}.gw-thankyou>.gw-thanks-receipt{animation-delay:120ms!important}.gw-thankyou>.gw-thankyou-actions{animation-delay:160ms!important}
+@keyframes gw-thanks-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .gw-thankyou-actions{width:100%;max-width:none}
 .guest-wizard .gw-thankyou-actions>button{width:100%;min-height:54px;background:var(--g-accent);color:var(--g-on-accent);font-size:14px;border:0;justify-content:center}
 .gw-thankyou-actions small{font-size:12px;line-height:1.7;color:var(--g-muted)}
@@ -393,5 +398,6 @@ html[data-guest-theme=dark] .guest-shell:has(.guest-wizard){--gw-nav-bg:var(--g-
 }
 @media(prefers-reduced-motion:reduce){
  .gw-thanks-spark,.gw-spin{animation:none!important}
+ .gw-send-overlay[open],.guest-shell .gw-thankyou>:is(.eyebrow,h1,p,.gw-couple-name,.gw-thanks-receipt,.gw-thankyou-actions){animation:none!important}
  .gw-thanks-spark-one{transform:rotate(8deg)}
 }

@@ -9,7 +9,10 @@ Status awal: storage aktif masih Supabase. R2 belum diaktifkan hanya dengan peru
 - OAuth `workers-r2.write` dan `account-api-tokens.write` berhasil. Token Object Read & Write dibatasi ke bucket ini; secret disimpan di `.env.local` dan artefak privat yang diabaikan Git.
 - Probe cloud berhasil: akses bucket, tulis/baca, signed GET, dan penolakan baca S3 anonim. Objek probe sudah dihapus.
 - Seluruh 44 referensi objek production berhasil disalin dan diverifikasi ukuran serta SHA-256: 12.965.573 byte, 0 gagal. Tidak ada penghapusan sumber atau perubahan database.
-- Aktivasi driver dan deployment menunggu konfigurasi secret production. Fallback Supabase tetap dipertahankan.
+- Secret production berhasil dikonfigurasi di Vercel. Deployment commit `e0a81ea71b06c1f6dd3839bbe567e5fc63482023` (`dpl_GYntfyFMue3xiLJQBKfXhS2UuXUb`) berstatus READY, dengan alias `kenangdulu.web.id` dan `kenangdulu.vercel.app`.
+- Driver production sekarang `r2`, dengan `STORAGE_FALLBACK_DRIVER=supabase`. Token Supabase bridge dipertahankan. Commit hanya mencakup perubahan R2; pekerjaan UI mobile tidak ikut dipublikasikan.
+- Inventaris sesudah deployment: 44 referensi, 44 objek tersedia di R2, 12.965.573 byte, 0 objek hilang. Tidak ada berkas tambahan yang perlu disalin pada saat inventaris ini.
+- Pemeriksaan yang dijalankan pada aktivasi ini: probe akses R2 privat, verifikasi ukuran/SHA-256 selama penyalinan, status deployment Vercel, dan pencocokan inventaris sesudah perpindahan. Build cloud Vercel berhasil sebagai bagian deployment. Tidak menjalankan build lokal, lint, typecheck lokal, suite, browser, atau alur unggah/rekaman/ZIP dari UI. Pemeriksaan UI pada langkah 7 belum dilakukan; fallback tetap aktif.
 
 ## Perilaku aplikasi
 
