@@ -15,7 +15,8 @@ import {PDFDocument} from 'pdf-lib';
 import sharp from 'sharp';
 import {providerLogin,providerRegister,providerRecovery,providerReset} from '@/lib/supabase-auth';
 import {uploadChunk,uploadProgress} from '@/lib/resumable-upload';
-import {coupleAccessStatus,configureCoupleAccess,hasCoupleAccess,unlockCoupleAccess,lockCoupleAccess} from '@/lib/couple-access';
+import {coupleAccessStatus,configureCoupleAccess,deleteCoupleAccess,hasCoupleAccess,unlockCoupleAccess,lockCoupleAccess} from '@/lib/couple-access';
+import {coupleCodeSchema} from '@/lib/couple-code';
 import {albumIdentity,coupleAlbums,downloadCoupleAlbum,mediaExtension,attachmentHeader} from '@/lib/couple-albums';
 import {FRAME_CAPABILITIES,frameAssetIds,toFrameDocument,validateFrame} from '@/lib/frame-document';
 import {parseFrame,saveFrame,frameResponse,importFrame} from '@/lib/frame-service';
@@ -243,8 +244,11 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   }
   if(a==='couple-access'&&method==='GET'){await eventAccess(u,e,'edit');return ok(await coupleAccessStatus(e.id));}
   if(a==='couple-access'&&method==='POST'){
-   await eventAccess(u,e,'edit');const b=z.object({enabled:z.boolean(),code:z.string().min(8).max(64).regex(/^[A-Za-z0-9-]+$/,'Gunakan huruf, angka, dan tanda hubung.').optional()}).parse(await body(req));
+   await eventAccess(u,e,'edit');const b=z.object({enabled:z.boolean(),code:coupleCodeSchema.optional()}).parse(await body(req));
    await configureCoupleAccess(e.id,b.code,b.enabled);await audit(u.id,'event.couple-access',{enabled:b.enabled},e.id);return ok({saved:true,enabled:b.enabled});
+  }
+  if(a==='couple-access'&&method==='DELETE'){
+   await eventAccess(u,e,'edit');await deleteCoupleAccess(e.id);await audit(u.id,'event.couple-access.delete',{},e.id);return ok({saved:true,enabled:false,configured:false});
   }
   if(a==='settings'&&method==='PATCH'){
    await eventAccess(u,e,'edit');const b=await body(req),s=settingsSchema.parse(b.settings),p=e.snapshot;

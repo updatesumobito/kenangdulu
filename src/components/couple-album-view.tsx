@@ -2,6 +2,7 @@
 
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 import {ArrowDown,ArrowDownToLine,ArrowLeft,ArrowRight,ArrowUpRight,CalendarDays,Camera,Check,Film,Globe2,Heart,HelpCircle,Images,KeyRound,LockKeyhole,MessageCircle,Mic,RefreshCw,Search,ShieldCheck,SlidersHorizontal,Sparkles,Video,X} from 'lucide-react';
 import CoupleGate from './couple-gate';
 import CouplePhotoViewer,{galleryPhotos,type AlbumPhoto} from './couple-photo-viewer';
@@ -18,6 +19,7 @@ const names:Record<string,string>=Object.fromEntries(categories.map(item=>[item.
 const statusNames:Record<string,string>={pending:'Menunggu moderasi',approved:'Disetujui',hidden:'Disembunyikan',rejected:'Ditolak'};
 
 export default function CoupleAlbumView({event:e,unlocked}:{event:any,unlocked:boolean}){
+ const router=useRouter();
  const [panel,setPanel]=useState<'album'|'access'>('album'),[kind,setKind]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(1),[reload,setReload]=useState(0),[data,setData]=useState<Collection|null>(null),[loading,setLoading]=useState(unlocked),[error,setError]=useState(''),[selected,setSelected]=useState<PhotoPreview|null>(null),[lockedTab,setLockedTab]=useState('story');
  const [typesOpen,setTypesOpen]=useState(false),[inputFocused,setInputFocused]=useState(false),[entranceIds,setEntranceIds]=useState<string[]>([]),[errorStatus,setErrorStatus]=useState<number|null>(null);
  const [guestAlbum,setGuestAlbum]=useState<GuestAlbum|null>(null);
@@ -29,21 +31,21 @@ export default function CoupleAlbumView({event:e,unlocked}:{event:any,unlocked:b
  useEffect(()=>{
   if(!unlocked||panel!=='album')return;
   const controller=new AbortController();let active=true;setLoading(true);setError('');setErrorStatus(null);setData(null);setEntranceIds([]);
-  const timer=setTimeout(()=>{api(collectionPath,{signal:controller.signal}).then(result=>{if(active){const entries=result.albums||result.items;if(!collectionEntered.current&&entries.length){setEntranceIds(entries.slice(0,6).map((item:{id:string})=>item.id));collectionEntered.current=true;}setData(result)}}).catch(err=>{if(active&&err.name!=='AbortError'){setError(err.message);setErrorStatus(err.status||null)}}).finally(()=>{if(active)setLoading(false)})},250);
+  const timer=setTimeout(()=>{api(collectionPath,{signal:controller.signal}).then(result=>{if(active){const entries=result.albums||result.items;if(!collectionEntered.current&&entries.length){setEntranceIds(entries.slice(0,6).map((item:{id:string})=>item.id));collectionEntered.current=true;}setData(result)}}).catch(err=>{if(active&&err.name!=='AbortError'){setError(err.message);setErrorStatus(err.status||null);if(err.status===401){setSelected(null);router.refresh()}}}).finally(()=>{if(active)setLoading(false)})},250);
   return()=>{active=false;clearTimeout(timer);controller.abort()};
- },[unlocked,collectionPath,panel,reload]);
+ },[unlocked,collectionPath,panel,reload,router]);
  useEffect(()=>{
   if(!unlocked||panel!=='album')return;
   let active=true,pending=false;const controller=new AbortController();
   const refresh=async()=>{
    if(document.hidden||pending)return;pending=true;
    try{const result=await api(collectionPath,{signal:controller.signal});if(active){setData(result);setError('');setErrorStatus(null);}}
-   catch(err:any){if(active&&[401,410].includes(err.status)){setData(null);setError(err.message);setErrorStatus(err.status);}}
+   catch(err:any){if(active&&[401,410].includes(err.status)){setData(null);setSelected(null);setError(err.message);setErrorStatus(err.status);if(err.status===401)router.refresh();}}
    finally{pending=false;}
   };
   const interval=setInterval(()=>void refresh(),10000);const visible=()=>{if(!document.hidden)void refresh();};document.addEventListener('visibilitychange',visible);
   return()=>{active=false;controller.abort();clearInterval(interval);document.removeEventListener('visibilitychange',visible);};
- },[unlocked,collectionPath,panel]);
+ },[unlocked,collectionPath,panel,router]);
  useEffect(()=>{
   if(typesOpen&&!typesDialog.current?.open){typesDialog.current?.showModal();typesDialog.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus();}
   if(!typesOpen&&typesDialog.current?.open)typesDialog.current.close();
