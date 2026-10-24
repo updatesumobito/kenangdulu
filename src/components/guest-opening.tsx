@@ -4,6 +4,7 @@ import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {ArrowRight,Camera,Check,Heart,Mic,Play,RotateCcw,Send,UserRound,MessageCircle} from 'lucide-react';
 
 import {GuestThemeToggle,useGuestAppearance} from './guest-shell';
+import BrandLogo from './brand-logo';
 
 type Step = {id:string,label:string,title:string,description:string};
 export default function GuestOpening({name,date,hashtag,modes=[],children}:{name:string,date:string,hashtag?:string,modes?:string[],children:ReactNode}) {
@@ -46,7 +47,7 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  function enter(){if(phase==='idle')setPhase('opening')}
  return <>
   {phase!=='entered'&&<section className="guest-opening" data-phase={phase} data-reduced={reduced} data-paused={!visible} aria-labelledby="opening-title" onKeyDown={ev=>{if(ev.key==='Escape')setPhase('entered')}}>
-   <header className="tutorial-top"><span>kenang dulu <small>THE MEMORY ARCHIVE</small></span><div className="tutorial-header-actions"><GuestThemeToggle/></div></header>
+   <header className="tutorial-top"><BrandLogo/><div className="tutorial-header-actions"><GuestThemeToggle/></div></header>
    <div className="opening-composition">
     <div className="opening-heading"><p className="eyebrow">SELAMAT DATANG DI HARI BAHAGIA KAMI</p><h1 id="opening-title">{name}</h1><p className="opening-tagline">Simpan momen.<br/><em>Titipkan doa.</em></p><small>{date}{hashtag&&<> · {hashtag}</>}</small>
      <p className="opening-intro">Foto, suara, dan doa terbaikmu. Kenangan kecil yang akan selalu berarti.</p>

@@ -1,0 +1,16 @@
+import {BarChart3,CalendarDays,CreditCard,Files,Layers3,LayoutDashboard,LayoutTemplate,ShieldCheck,SlidersHorizontal,Users} from 'lucide-react';
+/** Add a module here: navigation, breadcrumb, route aliases and panel loading share this contract. */
+export const ADMIN_MODULES=[
+ {id:'overview',label:'Ringkasan',description:'Angka operasional dan pekerjaan yang perlu tindakan.',route:'dashboard',aliases:['admin'],icon:LayoutDashboard,roles:['superadmin','designer'],featureFlag:null,loadPanel:()=>import('@/components/admin-queues')},
+ {id:'fulfillment',label:'Pekerjaan',description:'Assignment, tenggat, bahan, revisi dan persetujuan.',route:'fulfillment',aliases:['work'],icon:Layers3,roles:['superadmin','designer'],featureFlag:null,loadPanel:()=>import('@/components/admin-queues')},
+ {id:'payments',label:'Pembayaran',description:'Bukti transfer, verifikasi dan pencatatan refund manual.',route:'orders',aliases:['payments'],icon:CreditCard,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-queues')},
+ {id:'events',label:'Acara',description:'Daftar acara dan akses operasional setiap perayaan.',route:'events',aliases:[],icon:CalendarDays,roles:['superadmin','designer'],featureFlag:null,loadPanel:()=>import('@/components/admin-queues')},
+ {id:'templates',label:'Frame & Template',description:'Library geometri, frame acara, aset dan revisi.',route:'templates',aliases:['frames'],icon:LayoutTemplate,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-catalog-panel')},
+ {id:'partners',label:'Mitra & Pengguna',description:'Organisasi, anggota dan izin pengelola.',route:'partners',aliases:['users'],icon:Users,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-catalog-panel')},
+ {id:'packages',label:'Paket & Add-on',description:'Harga katalog dan snapshot entitlement pembelian.',route:'packages',aliases:['catalog'],icon:Files,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-catalog-panel')},
+ {id:'moderation',label:'Moderasi',description:'Laporan dan penanganan media acara.',route:'moderation',aliases:[],icon:ShieldCheck,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-catalog-panel')},
+ {id:'analytics',label:'Analitik',description:'Penggunaan media, kegagalan proses dan estimasi biaya.',route:'analytics',aliases:[],icon:BarChart3,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-queues')},
+ {id:'operations',label:'Operasional',description:'Antrean worker, retensi dan audit.',route:'system',aliases:['operations'],icon:SlidersHorizontal,roles:['superadmin'],featureFlag:null,loadPanel:()=>import('@/components/admin-catalog-panel')},
+] as const;
+export function adminModule(path:string){const route=path.replace(/^\//,'').replace(/^admin\/?/,'').split('/')[0]||'dashboard';return ADMIN_MODULES.find(m=>m.route===route||(m.aliases as readonly string[]).includes(route));}
+export function adminModuleEnabled(module:{roles:readonly string[];featureFlag:string|null},role:string,features:Record<string,boolean>={}){return module.roles.includes(role)&&(!module.featureFlag||features[module.featureFlag]===true);}

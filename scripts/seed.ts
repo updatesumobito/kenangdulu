@@ -20,7 +20,7 @@ for(const [index,slug,plan,channel] of [[0,'demo-mini','mini','DIRECT_MANAGED'],
  await rows("INSERT INTO orders(id,user_id,org_id,channel,plan_id,amount,snapshot,brief,status,fulfillment,designer_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,'paid','delivered',$9)",[orderId,channel==='DIRECT_MANAGED'?users.buyer:users[partner],channel==='DIRECT_MANAGED'?null:org.id,channel,plan,p.price,json(p.config),json(brief),users.designer]);
  const settings=defaultSettings(p.config),frames=p.config.frames?[{id:uid(),name:'Editorial',schema:presetFrame(4)}]:[];
  await rows("INSERT INTO events(id,order_id,org_id,customer_id,channel,slug,name,start_at,end_at,status,snapshot,settings,published,revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'live',$10,$11,$12,1)",[eventId,orderId,channel==='DIRECT_MANAGED'?'00000000-0000-4000-8000-000000000001':org.id,channel==='DIRECT_MANAGED'?users.buyer:null,channel,slug,brief.name,start,end,json(p.config),json(settings),json({settings,frames})]);
- for(const f of frames)await rows('INSERT INTO frames VALUES($1,$2,$3,$4)',[f.id,eventId,f.name,json(f.schema)]);
+ for(const f of frames)await rows('INSERT INTO frames(id,event_id,name,schema) VALUES($1,$2,$3,$4)',[f.id,eventId,f.name,json(f.schema)]);
  await rows('INSERT INTO revisions VALUES($1,$2,1,$3,$4,now())',[uid(),eventId,json(settings),json(frames)]);
  if(index===1)await rows('INSERT INTO event_staff VALUES($1,$2,$3)',[eventId,users.operator,json(['media_moderate','live_wall_view'])]);
 }

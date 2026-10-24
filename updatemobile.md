@@ -1,23 +1,6 @@
-Aku ingin kamu upgrade dan update UI dan UX untuk versi mobile di page tamu, setelah welcome page, aku ingin bottom bar berupa wizard dari langkah awal seperti kamera sampai akhir hasil dari semuanya dan klik kirim, wizard tiadk bisa diklik jika belum selesai,
-
-setelah page welcome buat form nama yang keren untuk di ingat ingat oleh pengantin nanti ini siapa
-
-kemudian lanjut
-
-untuk kamera ada beberapa upgrade, buat kamera full ada pilihan 9:16 atau normalnya 4:3 kemudian aku ingin tombol jepret berada di area kamera, jadi tidak perlu scroll, langkah awal beritahukan untuk izinkan kaemra di pengaturan, untuk pengaturan timer, pilih foto perangat taruh di atas atau dimanapun yang sesuai yang penting UX mudah digunakan, dan untuk semua tamu tidak ad apilihan centang bisa tampil di publik, karena semua tampil di private pengantin, pastikan jepret, balik kamera, berada di area kotak kamera, 
-
-kemudian setelah jepret beritahukan sisa 14 foto atau berapa, dna tidak harus semua foto, minimal ada 1 bisa lnajut ke wizard selanjutnya,, berikan tombol FIX atau apa berikan copywriting yang tepat,
-
-kemudian lanjut ke suara, mulai rekam, hentikan simpan ( dan smuanya nanti muncul di akhir wizard,jadi tampilan semuanya muncul buat dicek dulu oleh tamu, jika fix maka dibawah ada tombil, kirim, setelah tombol kirim di klik maka akan otomatis tmapil di page pengantin, tambahkan motion keren bergerak untuk loading mengirimnya, dan tambahkan page thankyou yang keren, pastikan khusus mobile pakai desain native mobile ada aksen melengkung )
-
-untuk video sama seperti kamera, tombol" yang penting ebrada di kotak kamera
-
-hilangkan foto pendampiung atau apa ini ga guna
-
-untuk ucapan cukup menuliskan ucapan saja tidak perlu ada template gaya kartu ( kita fix kan besok saja)
-
-kemudian diakhir wizard, ini tampil semuanya disini buat dicek oleh tamu sebelum semuanya dikirimkan,
-
-dan perlu di ingat,kalau bisa ini semua saat klik kirim juga tersimpan otomatis di perangkat tamu,
-
-upgrade UI dan UX nya, UI bisa pakai komponen seperti shadcn atau komponen yang lain yang keren, cari di website sumber komponen react yang keren, pastikan UX bisa digunakan denganmudah
+upgrade yang form nama, dan tambahkan aksen lucu native mobile diatasnya, atur agar fontnya cocok dan ukurannya pas di mobile
+di bagian kamera, pilih file tombolnya kepotong dan di abgian satu senyum itu paskan ukuran font nya, dan tombol original ini ga tau gunanya apa, hover saat dipilih ukura 4:3 atau 9:16 tulisan tidak kelihatan nanti perbaiki, kemudian tombol kotak disamping tombol jepret ini ga guna, ganti atau hapus, dan setelah foto tidak ada keterangna foto sisa berapa, buat nanti dan pastikan UI nya keren, dna pastikan pergerakan di kameraa smooth, daan tulsan dibawah hasil kamera buat lebih baik lagi,
+pilih file dibagian rekaman juga UI nya ga ejlas terlalu sederhana,t idak ada panduan
+yang dibagian video tidak ada pilihan ukuran, aku ingni kamu menggantinya dan kasih ukuran diatas, dan form pilihan masih jelek, ukuran 9:16 dan satunya lupa, kalau kamera 4:3 sepertinya salah, nanti cek di google, batasi 30 detik, dan kamera sangat lambat dibagian video, pastikan smooht, cari library atau komponen yangbisa membuaat smooth kameranya
+kemudian dihasil akhir buat UI yang keren dan tambahkan loading motion saat klik kirim
+unduh ootmatis dan tombol download di cek kenangan hilangkan, karena di page thankyou ternyata sudah ada unduh semua, aku ingin jangan berupa zip, tapi berupa multiple download sesuai file nya, dan upgrade page thankyou tambahkan motion bergerak, dan pastiakn elegant

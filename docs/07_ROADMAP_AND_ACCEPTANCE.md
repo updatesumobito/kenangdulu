@@ -1,3 +1,5 @@
+> Reconciliation 24 October 2026: current implementation and actual verification are in [PRD execution](implementation/PRD_EXECUTION_2026-10-24.md) and its requirement/parity matrices. The latest user instructions override older routine testing/build requirements; design (3).md governs platform visuals, with the wahyu-novita exception. Historical requirements and test evidence below are not a new PASS claim.
+
 # ROADMAP — CONTINUOUS ONE-PASS WEB IMPLEMENTATION (v2)
 
 **Instruksi utama:** Agent harus **mengerjakan seluruh workstream web sampai selesai dalam satu pelaksanaan berkelanjutan**, tanpa menunggu user mengetik "lanjut" pada tiap langkah. Checkpoint adalah untuk catatan dan pemulihan, bukan titik berhenti. **Source repo read-only, Windows-last**. Bila API credential/deployment diblokir, lanjutkan seluruh bagian yang dapat dijalankan dan laporkan kekurangan riil.

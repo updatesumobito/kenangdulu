@@ -30,3 +30,15 @@
   - native only; not copied
 
 No source repository environment, database, private customer media, node_modules, fonts, or binaries copied. Target code is newly implemented. Semantic design values and design patterns mapped with evidence.
+
+## Continuation: 24 October 2026
+
+Read-only capability/schema references: Mokabooth `apps/admin-web/components/frame-designer.tsx`, `lib/frame-layout.ts`, `lib/frame-export.ts`, and `moka-roadmap/PRD-Mokabooth-Frame-Builder-v2.md`. No source repository was written. New web document, renderer, portability, worker and Konva UI code live only in the target repository. Existing source provenance above remains historical; no new commit hash is inferred for it.
+
+Bundled PDF fonts were obtained from the official notofonts repositories, with the accompanying SIL Open Font License files in `public/fonts/memory-book`:
+
+- https://github.com/notofonts/noto-fonts/tree/main/hinted/ttf/NotoSans
+- https://github.com/notofonts/noto-fonts/tree/main/hinted/ttf/NotoSansArabic
+- https://github.com/notofonts/noto-cjk/tree/main/Sans/OTF/SimplifiedChinese
+
+Implementation references include the installed Next.js 16.4.2 documentation under `node_modules/next/dist/docs`, the installed Konva Transformer implementation and https://konvajs.org/docs/react/Transformer.html. SQL isolation guidance: https://supabase.com/docs/guides/database/postgres/row-level-security. No arbitrary source asset URLs, source environment values, source databases or source customer media were imported.

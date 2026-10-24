@@ -2,13 +2,14 @@
 
 import {createContext,useContext,useEffect,useState,type ReactNode} from 'react';
 import Link from 'next/link';
-import {Camera,ChevronLeft,Heart,Home,Images,MessageCircle,Mic,Moon,Sun,Video} from 'lucide-react';
+import BrandLogo from './brand-logo';
+import {Camera,ChevronLeft,Home,Images,MessageCircle,Mic,Moon,Sun,Video} from 'lucide-react';
 import {guestPath} from '@/lib/guest-path';
 
 type Appearance={dark:boolean,ready:boolean,toggle:()=>void,setIntroOpen:(open:boolean)=>void};
 const AppearanceContext=createContext<Appearance>({dark:false,ready:false,toggle:()=>{},setIntroOpen:()=>{}});
 export const useGuestAppearance=()=>useContext(AppearanceContext);
-function applyGuestTheme(next:boolean,slug:string){document.documentElement.dataset.guestTheme=next?'dark':'light';const maroon=slug==='wahyu-novita';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',maroon?(next?'#171315':'#f8f5f0'):(next?'#1d2320':'#f2eee8'));}
+function applyGuestTheme(next:boolean,slug:string,theme:string){document.documentElement.dataset.guestTheme=next?'dark':'light';document.querySelectorAll('link[rel="icon"][href*="/brand/favicon-"]').forEach(icon=>icon.setAttribute('media',icon.getAttribute('href')?.includes('favicon-'+(next?'dark':'light')+'.png')?'all':'not all'));const maroon=slug==='wahyu-novita';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='curtain-olive'?(next?'#150F03':'#EBE6D9'):maroon?(next?'#171315':'#f8f5f0'):(next?'#1d2320':'#f2eee8'));}
 export function GuestThemeToggle(){
  const {dark,ready,toggle}=useGuestAppearance();
  return <button type="button" className="guest-theme-toggle" onClick={toggle} disabled={!ready} aria-label={dark?'Gunakan mode terang':'Gunakan mode gelap'} title={dark?'Mode terang':'Mode gelap'}>{dark?<Sun size={19}/>:<Moon size={19}/>}</button>;
@@ -18,11 +19,11 @@ export default function GuestShell({event,activeMode='home',navigation=true,bran
  const [dark,setDark]=useState(false),[themeReady,setThemeReady]=useState(false),[introOpen,setIntroOpen]=useState(false);
  useEffect(()=>{
   const media=window.matchMedia('(prefers-color-scheme: dark)');
-  const update=()=>{let value:string|null=null;try{value=localStorage.getItem('komukuna-guest-theme')}catch{}const next=value==='dark'||value!=='light'&&media.matches;applyGuestTheme(next,event.slug);setDark(next);setThemeReady(true)};
+  const update=()=>{let value:string|null=null;try{value=localStorage.getItem('komukuna-guest-theme')}catch{}const next=value==='dark'||value!=='light'&&(event.settings.theme==='curtain-olive'||media.matches);applyGuestTheme(next,event.slug,event.settings.theme);setDark(next);setThemeReady(true)};
   update();media.addEventListener('change',update);window.addEventListener('storage',update);
   return()=>{media.removeEventListener('change',update);window.removeEventListener('storage',update)};
- },[event.slug]);
- function toggle(){if(!themeReady)return;const next=document.documentElement.dataset.guestTheme!=='dark';try{localStorage.setItem('komukuna-guest-theme',next?'dark':'light')}catch{}applyGuestTheme(next,event.slug);setDark(next);}
+ },[event.slug,event.settings.theme]);
+ function toggle(){if(!themeReady)return;const next=document.documentElement.dataset.guestTheme!=='dark';try{localStorage.setItem('komukuna-guest-theme',next?'dark':'light')}catch{}applyGuestTheme(next,event.slug,event.settings.theme);setDark(next);}
  const base=guestPath(event.slug),modes:string[]=event.settings.modes;
  const camera=modes.includes('disposable_photo')?'disposable':modes.includes('photo_strip')?'photo':modes.includes('gif')?'creative':null;
  const items=[{id:'home',label:'Acara',href:base,icon:Home},
@@ -33,7 +34,7 @@ export default function GuestShell({event,activeMode='home',navigation=true,bran
   ...(event.settings.gallery?[{id:'gallery',label:'Galeri',href:base+'/gallery',icon:Images}]:[])];
  return <AppearanceContext.Provider value={{dark,ready:themeReady,toggle,setIntroOpen}}><div className={'guest-page guest-shell theme-'+event.settings.theme} data-event-slug={event.slug} data-intro-open={introOpen} data-navigation={navigation}>
   <header className="guest-app-header" inert={introOpen} aria-hidden={introOpen||undefined}>
-   <Link className="guest-app-brand" href={brandHref||base} aria-label={brandHref?'Album pengantin '+event.name:'Kembali ke acara '+event.name}><span className="guest-brand-mark"><Heart size={18} strokeWidth={1.5}/></span><span>kenang dulu<small>THE MEMORY ARCHIVE</small></span></Link>
+   <Link className="guest-app-brand" href={brandHref||base} aria-label={brandHref?'Album pengantin '+event.name:'Kembali ke acara '+event.name}><BrandLogo/></Link>
    <div className="guest-header-end"><span className="guest-header-event">{event.name}</span><GuestThemeToggle/></div>
   </header>
   {navigation&&<nav className="guest-bottom-bar" aria-label="Navigasi acara" inert={introOpen} aria-hidden={introOpen||undefined}>{items.map(({id,label,href,icon:Icon})=>{const active=id===activeMode||id==='camera'&&['disposable_photo','photo_strip','gif'].includes(activeMode);return <Link key={id} href={href} prefetch={false} className={'guest-nav-item '+(id==='camera'?'guest-nav-camera':'')} aria-current={active?'page':undefined}><span className="guest-nav-icon"><Icon size={21} strokeWidth={active?2:1.65}/></span><span>{label}</span></Link>})}</nav>}

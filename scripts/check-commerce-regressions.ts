@@ -1,0 +1,57 @@
+/** Only regressions found during this implementation: payment terminal states, frame CAS, credit races, and PDF Unicode. */
+import assert from 'node:assert/strict';
+import {readFile,readdir} from 'node:fs/promises';
+import {PGlite} from '@electric-sql/pglite';
+import {randomUUID} from 'node:crypto';
+import {presetFrame,planSeeds} from '../src/lib/domain';
+const db=new PGlite();
+(globalThis as any).kvdb=Promise.resolve(db);
+try{
+ for(const file of (await readdir('infra/migrations')).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile('infra/migrations/'+file,'utf8'));
+ const userId=randomUUID(),orgId=randomUUID(),orderId=randomUUID(),eventId=randomUUID(),config=planSeeds[1][3],u={id:userId,role:'superadmin'},e={id:eventId,org_id:orgId,customer_id:userId,channel:'DIRECT_MANAGED',order_id:orderId,snapshot:config};
+ await db.query("INSERT INTO users(id,email,password_hash,name,role) VALUES($1,'regression@example.invalid','unused','Admin','superadmin')",[userId]);
+ await db.query("INSERT INTO organizations(id,owner_id,name) VALUES($1,$2,'Regression')",[orgId,userId]);
+ await db.query("INSERT INTO plans(id,name,price,config) VALUES('classic','Classic',150000,$1)",[JSON.stringify(config)]);
+ const brief={name:'Regression',contact:'local',startAt:'2026-11-01T00:00:00Z',endAt:'2026-11-02T00:00:00Z',timezone:'Asia/Jakarta',location:'',notes:''};
+ await db.query("INSERT INTO orders(id,user_id,org_id,channel,plan_id,amount,snapshot,brief,status) VALUES($1,$2,$3,'DIRECT_MANAGED','classic',150000,$4,$5,'payment_review')",[orderId,userId,orgId,JSON.stringify(config),JSON.stringify(brief)]);
+ await db.query("INSERT INTO events(id,order_id,org_id,customer_id,channel,slug,name,start_at,end_at,snapshot,settings) VALUES($1,$2,$3,$4,'DIRECT_MANAGED','regression','Regression',$5,$6,$7,'{}')",[eventId,orderId,orgId,userId,brief.startAt,brief.endAt,JSON.stringify(config)]);
+ const {saveFrame}=await import('../src/lib/frame-service');
+ const f=await saveFrame(e,u,{name:'Legacy',schema:presetFrame(4)});
+ const saved=await saveFrame(e,u,{id:f.id,expectedVersion:f.version,name:'Saved',schema:presetFrame(4)});assert.equal(saved.version,2);
+ await assert.rejects(()=>saveFrame(e,u,{id:f.id,expectedVersion:1,name:'Stale',schema:presetFrame(4)}),(err:any)=>err.code==='FRAME_VERSION_CONFLICT');
+ assert.equal((await db.query<any>('SELECT name FROM frames WHERE id=$1',[f.id])).rows[0].name,'Saved');
+ const {reviewPayment,paymentAdjustment,adminQuery}=await import('../src/lib/admin-queries');
+ await db.query('INSERT INTO documents(id,order_id,kind,object_key,mime,bytes) VALUES($1,$2,$3,$4,$5,10)',[randomUUID(),orderId,'payment-proof','unused','image/png']);
+ await db.query("UPDATE notification_templates SET enabled=true WHERE id='order_status'");
+ await reviewPayment(orderId,userId,'verify');
+ assert.equal((await db.query<any>('SELECT count(*)::int AS n FROM notification_outbox')).rows[0].n,1);
+ await assert.rejects(()=>paymentAdjustment(orderId,u,{kind:'cancel',reason:'Already paid',idempotencyKey:randomUUID()}),(err:any)=>err.code==='PAYMENT_ALREADY_SETTLED');
+ const refund={kind:'refund',amount:50000,reason:'Manual refund recorded',reference:'LOCAL-1',idempotencyKey:randomUUID()};
+ const first=await paymentAdjustment(orderId,u,refund),retry=await paymentAdjustment(orderId,u,refund);assert.equal(first.id,retry.id);
+ await paymentAdjustment(orderId,u,{...refund,amount:100000,reference:'LOCAL-2',idempotencyKey:randomUUID()});
+ await assert.rejects(()=>reviewPayment(orderId,userId,'verify'),(err:any)=>err.code==='PAYMENT_STATE_CONFLICT');
+ const payments:any=await adminQuery('payments',u,new URL('http://local.invalid/?q=Regression&status=refunded'));assert.equal(payments.items[0].id,orderId);
+ // A paid storage add-on must survive a later package upgrade and must not hide an intermediate tier.
+ await db.query("UPDATE orders SET status='paid' WHERE id=$1",[orderId]);
+ const {saveAddon,orderAddon,applyAddon}=await import('../src/lib/addons'),{upgradeOptions,createUpgradeOrder,applyUpgrade}=await import('../src/lib/upgrades');
+ const addon=await saveAddon(u,{name:'Ten GiB',price:1000,partnerPrice:null,entitlementKey:'storage',units:10*1024**3,enabled:true}),addonOrder=await orderAddon(e,u,{addonId:addon.id,quantity:1,confirm:true});await db.query("UPDATE orders SET status='paid' WHERE id=$1",[addonOrder.id]);await applyAddon(e,u,{orderId:addonOrder.id,reason:'Local regression fixture'});
+ await db.query("INSERT INTO plans(id,name,price,config) VALUES('celebration','Celebration',299000,$1)",[JSON.stringify(planSeeds[2][3])]);
+ const withAddon=(await db.query<any>('SELECT * FROM events WHERE id=$1',[eventId])).rows[0];assert.equal(withAddon.snapshot.storage,14*1024**3);assert.ok((await upgradeOptions(withAddon)).some(p=>p.id==='celebration'));
+ const upgrade=await createUpgradeOrder(withAddon,u,{planId:'celebration',confirmFullPackage:true});await db.query("UPDATE orders SET status='paid' WHERE id=$1",[upgrade.id]);await applyUpgrade(withAddon,u,{orderId:upgrade.id,reason:'Local regression fixture'});await applyUpgrade(withAddon,u,{orderId:upgrade.id,reason:'Idempotent retry fixture'});
+ const upgraded=(await db.query<any>('SELECT snapshot FROM events WHERE id=$1',[eventId])).rows[0].snapshot;assert.equal(upgraded.storage,22*1024**3);assert.equal(upgraded.frames,3);assert.equal(upgraded._packageId,'celebration');
+ const {grantCredit,reserveCredit,useReservation}=await import('../src/lib/vendor-credits');
+ process.env.VENDOR_CREDITS_ENABLED='true';
+ const grant=await grantCredit(u,{orgId,planId:'classic',units:1,reason:'Regression only; no payment',idempotencyKey:randomUUID()});
+ const reservations=await Promise.allSettled([reserveCredit(u,orgId,{grantId:grant.id,idempotencyKey:randomUUID()}),reserveCredit(u,orgId,{grantId:grant.id,idempotencyKey:randomUUID()})]);assert.equal(reservations.filter(r=>r.status==='fulfilled').length,1);
+ const r=reservations.find(r=>r.status==='fulfilled') as PromiseFulfilledResult<any>;await useReservation(u,orgId,r.value.id,'release');
+ const next=await reserveCredit(u,orgId,{grantId:grant.id,idempotencyKey:randomUUID()}),redeemed=await useReservation(u,orgId,next.id,'redeem',{brief}),repeated=await useReservation(u,orgId,next.id,'redeem',{brief});assert.equal((redeemed as any).orderId,(repeated as any).orderId);
+ const ownerId=randomUUID();await db.query("INSERT INTO users(id,email,password_hash,name,role) VALUES($1,'owner@example.invalid','unused','Owner','partner')",[ownerId]);await db.query('UPDATE organizations SET owner_id=$2 WHERE id=$1',[orgId,ownerId]);
+ const delegatedGrant=await grantCredit(u,{orgId,planId:'classic',units:1,reason:'Admin assisted grant regression',idempotencyKey:randomUUID()}),delegatedReservation=await reserveCredit(u,orgId,{grantId:delegatedGrant.id,idempotencyKey:randomUUID()}),delegatedOrder=await useReservation(u,orgId,delegatedReservation.id,'redeem',{brief});
+ assert.equal((await db.query<any>('SELECT user_id FROM orders WHERE id=$1',[(delegatedOrder as any).orderId])).rows[0].user_id,ownerId,'Admin-assisted credit redemption must create an order owned by the vendor owner');
+ await assert.rejects(()=>db.query("UPDATE credit_ledger SET delta=999 WHERE grant_id=$1",[grant.id]),/append-only/);
+ delete process.env.VENDOR_CREDITS_ENABLED;
+ const {createMemoryBook}=await import('../src/lib/memory-book');
+ const book=await createMemoryBook({name:'Élodie & 张伟 · أهلاً',start_at:brief.startAt,timezone:'Asia/Jakarta',snapshot:config},[{id:randomUUID(),author:'José 张伟',kind:'wish_card',text_content:'Selamat berbahagia — 世界 أهلاً'}],10);
+ assert.equal(book.failed.length,0);assert.equal(book.included,1);assert.equal(book.unsupportedCharacters.length,0);assert.ok(book.body.length>1000);
+ console.log('Focused regressions completed: additive migrations, frame stale-save rejection, payment terminal states/refund idempotency, filtered admin query, one-credit race/redeem idempotency, immutable ledger, paid add-ons retained across idempotent package upgrade, Unicode PDF. In-memory DB only; no email, external payment or remote DB.');
+}finally{await db.close();delete (globalThis as any).kvdb;}

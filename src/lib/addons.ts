@@ -1,0 +1,21 @@
+import {z} from 'zod';
+import {database,rows,one,json} from './db';
+import {uid,eventAccess} from './auth';
+import {fail,id as uuid} from './domain';
+export const addonSchema=z.object({id:uuid.optional(),name:z.string().min(2).max(100),price:z.number().int().min(0),partnerPrice:z.number().int().min(0).nullable(),entitlementKey:z.enum(['photos','storage','voice','video','notes','guests','submitDays','galleryDays','exportDays']),units:z.number().int().positive().max(1024**4),enabled:z.boolean()});
+export async function saveAddon(u:any,input:unknown){if(u.role!=='superadmin')fail('FORBIDDEN','Khusus superadmin.',403);const b=addonSchema.parse(input),id=b.id||uid();await rows('INSERT INTO addon_catalog(id,name,price,partner_price,entitlement_key,units,enabled) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO UPDATE SET name=excluded.name,price=excluded.price,partner_price=excluded.partner_price,entitlement_key=excluded.entitlement_key,units=excluded.units,enabled=excluded.enabled,version=addon_catalog.version+1',[id,b.name,b.price,b.partnerPrice,b.entitlementKey,b.units,b.enabled]);await rows('INSERT INTO audit(id,actor_id,action,detail) VALUES($1,$2,$3,$4)',[uid(),u.id,'addon.catalog',json({id,...b})]);return {id};}
+export async function orderAddon(e:any,u:any,input:unknown){
+ await eventAccess(u,e,'export');if(e.channel==='DIRECT_MANAGED'&&e.customer_id!==u.id)fail('FORBIDDEN','Hanya pembeli acara dapat memesan add-on.',403);if(e.channel==='PARTNER_SELF_SERVICE'&&!await one('SELECT id FROM organizations WHERE id=$1 AND owner_id=$2',[e.org_id,u.id]))fail('FORBIDDEN','Hanya pemilik organisasi dapat membeli add-on.',403);
+ const b=z.object({addonId:uuid,quantity:z.number().int().min(1).max(100),confirm:z.literal(true)}).parse(input),addon=await one('SELECT * FROM addon_catalog WHERE id=$1 AND enabled=true',[b.addonId]);if(!addon)fail('NOT_FOUND','Add-on tidak tersedia.',404);
+ const price=e.channel==='DIRECT_MANAGED'?addon.price:addon.partner_price;if(price===null)fail('PARTNER_PRICING_UNDECIDED','Harga mitra belum ditetapkan.',409);if(!e.snapshot[addon.entitlement_key]&&['voice','video'].includes(addon.entitlement_key))fail('PLAN_FEATURE_UNAVAILABLE','Add-on kuota tidak membuka mode yang tidak termasuk paket.',403);
+ const old=await one('SELECT * FROM orders WHERE id=$1',[e.order_id]),id=uid(),amount=price*b.quantity;if(!Number.isSafeInteger(amount)||amount>2147483647)fail('INVALID_AMOUNT','Nominal pesanan terlalu besar.');
+ await rows('INSERT INTO orders(id,user_id,org_id,channel,plan_id,amount,snapshot,brief) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[id,u.id,e.org_id,e.channel,old.plan_id,amount,json(e.snapshot),json({...old.brief,addonEventId:e.id,addonSnapshot:{...addon,quantity:b.quantity},notes:'Add-on '+addon.name})]);return {id,amount};
+}
+export async function applyAddon(e:any,u:any,input:unknown){
+ if(u.role!=='superadmin')fail('FORBIDDEN','Khusus superadmin.',403);const b=z.object({orderId:uuid,reason:z.string().min(5).max(500)}).parse(input);
+ return (await database()).transaction(async tx=>{
+  const fresh=await one('SELECT * FROM events WHERE id=$1 FOR UPDATE',[e.id],tx),o=await one('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[b.orderId],tx);if(!o||o.status!=='paid'||o.brief.addonEventId!==e.id)fail('ADDON_PAYMENT_REQUIRED','Add-on harus cocok dengan acara dan terverifikasi.',409);
+  if(await one('SELECT id FROM entitlement_changes WHERE order_id=$1',[o.id],tx))return {applied:true};const a=o.brief.addonSnapshot,key=a.entitlement_key,newSnapshot={...fresh.snapshot,[key]:Number(fresh.snapshot[key])+Number(a.units)*a.quantity};if(!Number.isSafeInteger(newSnapshot[key]))fail('INVALID_LIMIT','Batas kuota tidak valid.');
+  await tx.query('INSERT INTO entitlement_changes(id,event_id,order_id,actor_id,previous_snapshot,new_snapshot,reason) VALUES($1,$2,$3,$4,$5,$6,$7)',[uid(),e.id,o.id,u.id,json(fresh.snapshot),json(newSnapshot),b.reason]);await tx.query('UPDATE events SET snapshot=$2 WHERE id=$1',[e.id,json(newSnapshot)]);await tx.query("UPDATE orders SET fulfillment='delivered' WHERE id=$1",[o.id]);await tx.query('INSERT INTO audit(id,actor_id,event_id,action,detail) VALUES($1,$2,$3,$4,$5)',[uid(),u.id,e.id,'addon.apply',json({orderId:o.id,key,previous:fresh.snapshot[key],next:newSnapshot[key],reason:b.reason})]);return {applied:true};
+ });
+}

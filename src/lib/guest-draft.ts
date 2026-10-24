@@ -17,10 +17,9 @@ export async function readGuestDraft(eventId:string){
 export const writeGuestDraft=(draft:GuestDraft)=>transact('readwrite',store=>store.put(draft));
 export function mediaExtension(blob:Blob){const mime=blob.type.split(';')[0];return ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','video/mp4':'mp4','video/quicktime':'mov','video/webm':'webm','audio/mp4':'m4a','audio/webm':'webm','audio/ogg':'ogg','audio/mpeg':'mp3'} as Record<string,string>)[mime]||'bin';}
 export const mediaFilename=(media:DraftMedia,index:number)=>`${media.kind==='voice'?'suara':media.kind==='video_wish'?'video':'foto'}-${String(index+1).padStart(2,'0')}.${mediaExtension(media.blob)}`;
-export async function guestArchive(draft:GuestDraft,eventName:string){
- const {zip,strToU8}=await import('fflate');const files:Record<string,Uint8Array>={};
- for(let i=0;i<draft.media.length;i++)files[mediaFilename(draft.media[i],i)]=new Uint8Array(await draft.media[i].blob.arrayBuffer());
- files['ucapan.txt']=strToU8(`Untuk ${eventName}\nDari ${draft.name}\n\n${draft.text||'(Tidak ada ucapan)'}\n\nKenangan pribadi untuk pengantin.\n`);
- return await new Promise<Blob>((resolve,reject)=>zip(files,{level:0},(error,data)=>error?reject(error):resolve(new Blob([new Uint8Array(data)],{type:'application/zip'}))));
+export function guestDownloadFiles(draft:GuestDraft,eventName:string){
+ const files=draft.media.map((media,index)=>({blob:media.blob,filename:mediaFilename(media,index)}));
+ if(draft.text.trim())files.push({blob:new Blob([`Untuk ${eventName}\nDari ${draft.name}\n\n${draft.text}\n\nKenangan pribadi untuk pengantin.\n`],{type:'text/plain;charset=utf-8'}),filename:'ucapan.txt'});
+ return files;
 }
 export function downloadBlob(blob:Blob,filename:string){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),60000);}

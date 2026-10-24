@@ -23,6 +23,8 @@ export async function eventAccess(user:any,event:any,permission='view'){
   const staff=await one('SELECT permissions FROM event_staff WHERE event_id=$1 AND user_id=$2',[event.id,user.id]);
   const perm=({view:'gallery_view',edit:'event_edit',frame:'event_edit',moderate:'media_moderate',display:'live_wall_view',export:'media_export'} as any)[permission];
   if(staff?.permissions.includes(perm)||(permission==='view'&&staff))return true;
+  const member=await one('SELECT permissions FROM members WHERE org_id=$1 AND user_id=$2',[event.org_id,user.id]);
+  if(member?.permissions.includes(perm)||(permission==='view'&&member?.permissions.some((p:string)=>['event_edit','media_moderate','live_wall_view','gallery_view','media_export'].includes(p))))return true;
  }
  fail('FORBIDDEN','Anda tidak memiliki izin untuk tindakan ini.',403);
 }

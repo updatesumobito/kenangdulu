@@ -13,7 +13,7 @@ import subprocess
 import sys
 import threading
 
-SERVER = 'supabase-komukuna'
+SERVER = os.environ.get('SUPABASE_MCP_SERVER', 'supabase')
 PROJECT = 'xpwhpeolndmprzmdkldm'
 
 def main():
@@ -23,9 +23,7 @@ def main():
     if not command:
         raise RuntimeError('Codex CLI is not installed')
     process = subprocess.Popen(
-        [command, 'app-server', '-c', 'mcp_servers.supabase.enabled=false',
-         '-c', 'mcp_servers.vercel.enabled=false', '-c', 'mcp_servers.stitch.enabled=false',
-         '-c', 'mcp_servers.uptimerobot.enabled=false'],
+        [command, 'app-server'],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
         text=True, encoding='utf-8', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     inbox = queue.Queue()

@@ -1,9 +1,11 @@
+import {adminModule} from '@/lib/admin-modules';
 import Link from 'next/link';
-import {ArrowUpRight, BookOpen, CalendarDays, CircleCheck, Clock3, CreditCard, Files, FolderHeart, Layers3, LayoutTemplate, ShieldCheck, SlidersHorizontal, Users, type LucideIcon} from 'lucide-react';
+import BrandLogo from './brand-logo';
+import {ArrowUpRight, CalendarDays, CircleCheck, Clock3, CreditCard, Files, FolderHeart, Layers3, LayoutTemplate, ShieldCheck, SlidersHorizontal, Users, type LucideIcon} from 'lucide-react';
 
 export const adminIcons:Record<string,LucideIcon>={pribadi:FolderHeart,fulfillment:Layers3,orders:CreditCard,events:CalendarDays,packages:Files,templates:LayoutTemplate,partners:Users,moderation:ShieldCheck,system:SlidersHorizontal};
 
-export function MemoryBrand(){return <Link href="/" className="kd-brand" aria-label="Kenang Dulu — beranda"><span className="kd-brand-icon"><BookOpen size={23} strokeWidth={1.3}/></span><span>kenang dulu<small>THE MEMORY ARCHIVE</small></span></Link>}
+export function MemoryBrand({signature=false}:{signature?:boolean}={}){return <Link href="/" className="kd-brand" aria-label="Kenang Dulu - beranda"><BrandLogo variant={signature?'signature':'horizontal'}/></Link>}
 
 export function AdminMetric({label,value,detail,kind}:{label:string,value:number,detail:string,kind:'orders'|'live'|'review'}){
  const Icon=kind==='orders'?Files:kind==='live'?CalendarDays:Clock3;
@@ -26,6 +28,6 @@ const contexts:Record<string,[string,string]>={
  system:['Sistem & audit','Ruang kendali operasional dan aktivitas.'],
  pribadi:['Acara pribadi','Ruang kecil untuk hari yang berarti.'],
 };
-export function adminContext(path:string){return contexts[path.split('/')[1]||path]||['Detail acara','Semua detail, tertata dalam satu ruang.']}
+export function adminContext(path:string){const module=adminModule(path);if(module)return [module.label,module.description];return contexts[path.split('/')[1]||path]||['Detail acara','Semua detail, tertata dalam satu ruang.']}
 
 export function AdminPageNote({path}:{path:string}){const [title,description]=adminContext(path);return <div className="kd-page-note"><span><span className="kd-status-dot"/> ADMIN WORKSPACE</span><span>{description}</span><span className="kd-note-title">{title}<ArrowUpRight size={14}/></span></div>}

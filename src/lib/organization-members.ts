@@ -1,0 +1,10 @@
+import {z} from 'zod';
+import {rows,one,database,json} from './db';
+import {uid} from './auth';
+import {fail,id as uuid} from './domain';
+export const MEMBER_PERMISSIONS=['event_edit','media_moderate','live_wall_view','gallery_view','media_export','billing_view'] as const;
+export async function orgMembers(u:any,orgId:string){const org=await one('SELECT * FROM organizations WHERE id=$1',[uuid.parse(orgId)]);if(!org||org.owner_id!==u.id&&u.role!=='superadmin')fail('FORBIDDEN','Hanya pemilik organisasi dapat mengelola anggota.',403);return {members:await rows('SELECT m.user_id,m.permissions,u.name,u.email FROM members m JOIN users u ON u.id=m.user_id WHERE org_id=$1 ORDER BY u.name',[orgId]),permissions:MEMBER_PERMISSIONS};}
+export async function saveOrgMember(u:any,orgId:string,input:unknown){
+ await orgMembers(u,orgId);const b=z.object({email:z.email(),permissions:z.array(z.enum(MEMBER_PERMISSIONS)).max(MEMBER_PERMISSIONS.length),remove:z.boolean().default(false)}).parse(input);
+ await (await database()).transaction(async tx=>{const org=await one('SELECT * FROM organizations WHERE id=$1 FOR UPDATE',[orgId],tx);if(org.owner_id!==u.id&&u.role!=='superadmin')fail('FORBIDDEN','Pemilik organisasi diperlukan.',403);const target=await one('SELECT id FROM users WHERE email=$1',[b.email.toLowerCase()],tx);if(!target)fail('MEMBER_NOT_REGISTERED','Minta anggota mendaftar terlebih dahulu, lalu tambahkan email akun tersebut.',409);if(target.id===org.owner_id)fail('OWNER_MEMBER','Pemilik tetap mengelola organisasi melalui hak kepemilikan.');if(b.remove)await tx.query('DELETE FROM members WHERE org_id=$1 AND user_id=$2',[orgId,target.id]);else await tx.query('INSERT INTO members(org_id,user_id,permissions) VALUES($1,$2,$3) ON CONFLICT(org_id,user_id) DO UPDATE SET permissions=excluded.permissions',[orgId,target.id,json(b.permissions)]);await tx.query('INSERT INTO audit(id,actor_id,action,detail) VALUES($1,$2,$3,$4)',[uid(),u.id,'organization.member',json({organizationId:orgId,userId:target.id,...b})]);});return {saved:true};
+}

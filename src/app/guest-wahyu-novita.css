@@ -33,6 +33,7 @@ html[data-guest-theme='dark'] .guest-shell.guest-page[data-event-slug='wahyu-nov
 html:has(.guest-shell[data-event-slug='wahyu-novita']){background:#f8f5f0}
 html[data-guest-theme='dark']:has(.guest-shell[data-event-slug='wahyu-novita']){background:#171315}
 .guest-shell[data-event-slug='wahyu-novita'] .gw-camera-idle{background:linear-gradient(155deg,#4a1d2c,#171315)}
+.guest-shell.guest-page[data-event-slug='wahyu-novita'] .couple-dashboard{--couple-hero-bg:var(--wn-header-start);--couple-hero-ink:var(--wn-header-text);--couple-hero-gold:var(--wn-header-gold)}
 .guest-shell[data-event-slug='wahyu-novita'] .gw-camera-idle button{background:#fff9f1;color:#701c34}
 .guest-shell[data-event-slug='wahyu-novita'] .gw-video-viewfinder>video{background:var(--color-media-bg)}
 .guest-shell[data-event-slug='wahyu-novita'] .gw-remove{background:rgba(53,20,33,.82)}

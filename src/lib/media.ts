@@ -1,4 +1,5 @@
 import {guestSettings} from './guest-settings';
+import {guestVideoLimit} from './media-limits';
 import {hasCoupleAccess} from './couple-access';
 import { database,one,rows,json,DB } from './db';
 import {fail,isPhoto} from './domain';
@@ -49,17 +50,18 @@ export async function reserve(input:any){
   if(isPhoto(kind)&&photos.length+physical.count>=p.photos)fail('EVENT_QUOTA_EXCEEDED','Kuota foto acara telah habis.',409);
   if(kind==='disposable_photo'&&usage.filter(v=>v.guest_id===s.guest_id&&v.kind==='disposable_photo').length>=Math.min(p.perGuest,settings.perGuest))fail('GUEST_LIMIT_EXCEEDED','Jatah foto Anda sudah habis.',409);
   if(kind==='voice'&&usage.filter(v=>v.kind==='voice').length>=p.voice||kind==='video_wish'&&usage.filter(v=>v.kind==='video_wish').length>=p.video)fail('EVENT_QUOTA_EXCEEDED','Kuota rekaman acara telah habis.',409);
-  const reservedBytes=Math.max(size*2,isPhoto(kind)?256*1024:kind==='voice'?settings.voiceSec*16000+65536:settings.videoSec*160000+262144);
+  const reservedBytes=Math.max(size*2,isPhoto(kind)?256*1024:kind==='voice'?settings.voiceSec*16000+65536:guestVideoLimit(settings.videoSec)*160000+262144);
   if(usage.reduce((n,v)=>n+Number(v.max_bytes),0)+Number(physical.bytes)+Number(frameBytes.bytes)+reservedBytes>p.storage)fail('STORAGE_QUOTA_EXCEEDED','Penyimpanan acara penuh.',409);
  const intent={id:uid(),event_id:e.id,guest_id:s.guest_id,kind,state:'reserved',max_bytes:reservedBytes,mime,object_key:e.id+'/'+uid(),snapshot:s.snapshot,consent:false,privacy:'private_owner'};
   await tx.query("INSERT INTO intents(id,event_id,guest_id,client_key,kind,max_bytes,mime,object_key,snapshot,consent,privacy,expires_at,expected_bytes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now()+interval '15 minutes',$12)",[intent.id,e.id,s.guest_id,input.idempotencyKey,kind,intent.max_bytes,mime,intent.object_key,json(s.snapshot),intent.consent,intent.privacy,size]);return intent;
  });
 }
 export async function inspect(body:Buffer,kind:string,maxSec:number){
+ if(kind==='video_wish')maxSec=guestVideoLimit(maxSec);
  if(isPhoto(kind)){
-  const m=await sharp(body,{limitInputPixels:32_000_000,animated:kind==='gif'}).metadata().catch(()=>fail('INVALID_MEDIA','Berkas bukan gambar yang valid.',415));
+  const m=await sharp(body,{limitInputPixels:36_000_000,animated:kind==='gif'}).metadata().catch(()=>fail('INVALID_MEDIA','Berkas bukan gambar yang valid.',415));
   if(!['jpeg','png','webp','gif'].includes(m.format||'')||(kind==='gif'&&m.format!=='gif'))fail('INVALID_MEDIA','Format gambar tidak cocok.',415);
-  if(kind==='gif'&&(m.pages||1)>60)fail('INVALID_MEDIA','Animasi terlalu panjang.',415);return {duration:0,mime:kind==='gif'?'image/gif':'image/jpeg'};
+  if(kind==='gif'&&(m.pages||1)>60)fail('INVALID_MEDIA','Animasi terlalu panjang.',415);return {duration:0,mime:kind==='gif'?'image/gif':kind==='photo_strip'&&m.format==='png'?'image/png':'image/jpeg'};
  }
  const dir=await mkdtemp(path.join(tmpdir(),'kv-probe-'));try{
   const file=path.join(dir,'input');await writeFile(file,body);
@@ -93,10 +95,11 @@ export async function finalize(intentId:string){
  });
 }
 export async function mediaAccess(m:any,req?:Request,display=false){
- if(!m||m.moderation==='deleted'||m.moderation==='hidden'||m.processing!=='ready')fail('MEDIA_UNAVAILABLE','Media belum tersedia.',404);
+ if(!m||m.moderation==='deleted'||m.processing!=='ready')fail('MEDIA_UNAVAILABLE','Media belum tersedia.',404);
  const e=await one('SELECT * FROM events WHERE id=$1',[m.event_id]);const u=await currentUser();
  if(await hasCoupleAccess(e.id)){if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa album pengantin telah berakhir.',410);return;}
  if(u){try{await eventAccess(u,e);if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa unduh telah berakhir.',410);return;}catch(err:any){if(err.code!=='FORBIDDEN')throw err}}
+ if(m.moderation==='hidden')fail('MEDIA_UNAVAILABLE','Media belum tersedia.',404);
  if(display&&req){const d=await one('SELECT * FROM display_tokens WHERE token_hash=$1 AND event_id=$2 AND expires_at>now() AND NOT revoked',[hash(new URL(req.url).searchParams.get('display')||''),e.id]);if(!d)fail('FORBIDDEN','Token layar tidak valid.',403);}
  if(!e.published?.settings.gallery&&!display)fail('FORBIDDEN','Galeri privat.',403);
  if(e.reveal_at&&new Date(e.reveal_at)>new Date())fail('REVEAL_NOT_STARTED','Album belum dibuka.',403);
@@ -106,7 +109,7 @@ export async function mediaAccess(m:any,req?:Request,display=false){
 export async function processMedia(m:any){
  const body=await storage.get(m.object_key);let output:Buffer,mime=m.mime;
  if(isPhoto(m.kind)){
-  output=m.kind==='gif'?await sharp(body,{animated:true}).resize({width:1000,height:1500,fit:'inside',withoutEnlargement:true}).gif().toBuffer():await sharp(body).rotate().resize({width:2400,height:2400,fit:'inside',withoutEnlargement:true}).jpeg({quality:87}).toBuffer();
+  output=m.kind==='gif'?await sharp(body,{animated:true}).resize({width:1000,height:1500,fit:'inside',withoutEnlargement:true}).gif().toBuffer():m.kind==='photo_strip'?await (mime==='image/png'?sharp(body,{limitInputPixels:36_000_000}).rotate().png():sharp(body,{limitInputPixels:36_000_000}).rotate().jpeg({quality:94})).toBuffer():await sharp(body).rotate().resize({width:2400,height:2400,fit:'inside',withoutEnlargement:true}).jpeg({quality:87}).toBuffer();
  }else{
   const dir=await mkdtemp(path.join(tmpdir(),'kv-transcode-'));try{const input=path.join(dir,'input'),out=path.join(dir,'output.mp4');await writeFile(input,body);
    await run(ffmpeg!,['-y','-i',input,'-map_metadata','-1',...(m.kind==='voice'?['-vn','-c:a','aac','-b:a','96k']:['-vf',"scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2",'-c:v','libx264','-preset','veryfast','-b:v','900k','-maxrate','1200k','-bufsize','2400k','-c:a','aac','-b:a','96k']),'-movflags','+faststart',out],{timeout:90000,maxBuffer:2*1024**2});output=await readFile(out);

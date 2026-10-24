@@ -13,7 +13,7 @@ function decodeJson(value:any):any {
  return value;
 }
 export const dataDir=path.resolve(process.env.VERCEL?'/tmp/komukuna-virtual':process.env.DATA_DIR||'.data');
-async function open():Promise<DB>{
+async function open(explicitMigration=false):Promise<DB>{
  await mkdir(dataDir,{recursive:true});
  let db:DB;
  if(process.env.DATABASE_URL){
@@ -25,15 +25,16 @@ async function open():Promise<DB>{
   db=wrap(sql);
  }else if(process.env.VERCEL)throw Error('Vercel requires a configured external DATABASE_URL.');
  else db=new PGlite(path.join(dataDir,'postgres')) as unknown as DB;
- if(process.env.DATABASE_AUTO_MIGRATE!=='0')await db.exec('CREATE TABLE IF NOT EXISTS migrations (name text PRIMARY KEY, applied_at timestamptz DEFAULT now())');
+ const autoMigrate=explicitMigration||!process.env.DATABASE_URL&&process.env.DATABASE_AUTO_MIGRATE!=='0';
+ if(autoMigrate)await db.exec('CREATE TABLE IF NOT EXISTS migrations (name text PRIMARY KEY, applied_at timestamptz DEFAULT now())');
  for(const file of (await readdir(path.join(process.cwd(),'infra/migrations'))).filter(f=>f.endsWith('.sql')).sort()){
   const name=file.replace(/\.sql$/,'');if((await db.query('SELECT 1 FROM migrations WHERE name=$1',[name])).rows.length)continue;
-  if(process.env.DATABASE_AUTO_MIGRATE==='0')throw Error('Database migration required: '+name+'. Apply it with the deployment MCP/owner connection before starting the app.');
+  if(!autoMigrate)throw Error('Database migration required: '+name+'. Apply it explicitly with db:migrate before starting the app. Remote migrations never run on application startup.');
   await db.transaction(async tx=>{await tx.exec(await readFile(path.join(process.cwd(),'infra/migrations',file),'utf8'));await tx.query('INSERT INTO migrations(name) VALUES($1)',[name]);});
  }
  return db;
 }
-export const database=()=>g.kvdb??=(open());
+export const database=(options?:{migrate?:boolean})=>g.kvdb??=(open(options?.migrate));
 export async function rows<T extends Row=Row>(sql:string,params:any[]=[],db?:DB){return (await (db||await database()).query<T>(sql,params)).rows;}
 export async function one<T extends Row=Row>(sql:string,params:any[]=[],db?:DB){return (await rows<T>(sql,params,db))[0];}
 export const json=(v:any)=>JSON.stringify(v);

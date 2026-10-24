@@ -1,3 +1,5 @@
+> Reconciliation 24 October 2026: current implementation and actual verification are in [PRD execution](implementation/PRD_EXECUTION_2026-10-24.md) and its requirement/parity matrices. The latest user instructions override older routine testing/build requirements; design (3).md governs platform visuals, with the wahyu-novita exception. Historical requirements and test evidence below are not a new PASS claim.
+
 # KOMUKUNA VIRTUAL — COMPLETE PRODUCT & IMPLEMENTATION KIT
 **Versi 2.0 — 23 Oktober 2026 | Status: specification, bukan aplikasi selesai | Bahasa: Indonesia**
 

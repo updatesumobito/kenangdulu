@@ -1,0 +1,8 @@
+# Album pengantin: pemulihan database, 24 Oktober 2026
+
+- MCP `supabase` dikonfigurasi ulang melalui Codex CLI untuk proyek `xpwhpeolndmprzmdkldm`; login OAuth berhasil. Helper `scripts/supabase-mcp.py` memakai nama tersebut secara default dan dapat diganti melalui `SUPABASE_MCP_SERVER`.
+- Server lokal gagal karena database hanya memiliki migrasi aplikasi 001–013, sedangkan workspace memerlukan migrasi berikutnya. Migrasi 014–020 diterapkan melalui MCP dan dicatat dalam `public.migrations` serta riwayat migrasi Supabase.
+- Migrasi hosted 014–018 menyertakan grant/policy akun privat `komukuna_backend`. Migrasi 019 menyesuaikannya dengan izin modul dan pembatasan perubahan riwayat. Search path fungsi `enqueue_order_status`, `prevent_credit_mutation`, dan `prevent_history_mutation` ditetapkan ke `public, pg_temp` setelah temuan advisor. Akses browser tidak ditambahkan.
+- Percobaan pertama migrasi 020 gagal dan dibatalkan karena `plans.config` berisi JSON string. File migrasi diperbaiki untuk menormalkan format lama menjadi JSON object sebelum menambahkan `qrPdf`; penerapan berikutnya berhasil. Snapshot pesanan/acara tidak diubah oleh migrasi ini.
+- Query memakai akun aplikasi mengonfirmasi 20 migrasi tercatat, konfigurasi empat paket berbentuk object, dan nilai `qrPdf` sesuai migrasi. Setelah restart server, GET `http://localhost:3107/wahyu-novita/pengantin` menghasilkan HTTP 200, memuat judul album dan input kode, serta tidak memuat pesan gangguan sementara.
+- Belum menguji interaksi browser, login kode pengantin, atau koleksi setelah masuk. Tidak menjalankan build, lint, typecheck, atau suite tes. Kode akses pengantin tidak diganti.

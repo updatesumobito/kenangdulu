@@ -6,6 +6,7 @@ node_modules/
 .data-perf/
 .data-supabase/
 .next-production/
+.next-prd-preview/
 test-results/
 playwright-report/
 *.tsbuildinfo

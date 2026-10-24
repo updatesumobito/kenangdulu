@@ -1,3 +1,5 @@
+> Reconciliation 24 October 2026: current implementation and actual verification are in [PRD execution](implementation/PRD_EXECUTION_2026-10-24.md) and its requirement/parity matrices. The latest user instructions override older routine testing/build requirements; design (3).md governs platform visuals, with the wahyu-novita exception. Historical requirements and test evidence below are not a new PASS claim.
+
 # DESIGN.md — KOMUKUNA VIRTUAL 2.0
 **UI/UX contract v2 | BOOKING is mandatory verified source, wedding fallback provisional**
 
