@@ -1,6 +1,6 @@
 /* The welcome is a viewport, with space reserved for its primary action. */
 .guest-shell .guest-opening {
- --opening-ease:cubic-bezier(.23,1,.32,1);--opening-fold:cubic-bezier(.77,0,.175,1);
+ --opening-ease:cubic-bezier(.23,1,.32,1);--opening-fold:cubic-bezier(.37,0,.63,1);
  position:fixed;inset:0;width:100%;height:100vh;height:100dvh;max-height:100dvh;
  overflow:hidden;overscroll-behavior:none;display:grid;
  grid-template-rows:auto minmax(0,1fr) auto auto;
@@ -10,7 +10,6 @@
 .guest-shell .guest-opening .tutorial-top {width:min(100%,1120px);min-height:46px;padding:0 0 10px;gap:12px}
 .guest-shell .guest-opening .tutorial-top>span {font-family:var(--serif);font-size:26px;line-height:1}
 .guest-shell .guest-opening .tutorial-header-actions {gap:8px}
-.guest-shell .guest-opening button.opening-motion-toggle {width:auto;height:44px;min-height:44px;padding:0 12px;gap:6px;border:1px solid var(--g-line);background:var(--g-surface);color:var(--g-ink);border-radius:24px;font-size:10px;white-space:nowrap}
 .guest-shell .guest-opening .opening-composition {width:min(100%,1040px);height:100%;min-height:0;margin:0 auto;padding:16px 0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,80px);align-items:center}
 .guest-shell .guest-opening .opening-heading {min-width:0}
 .guest-shell .guest-opening .opening-heading .eyebrow {font-size:10px;letter-spacing:.16em;line-height:1.7;max-width:340px;margin:0 0 18px}
@@ -75,7 +74,7 @@
 .guest-shell .guest-opening .opening-invitation>small {display:block;font-size:10px;line-height:1.5;margin:8px 0 0;max-width:none}
 .guest-shell .guest-opening .opening-actions-note {display:flex;font-size:11px;line-height:1.5}
 .guest-shell .guest-opening>footer {display:flex;width:min(100%,1040px);min-height:0;margin:0 auto;padding:6px 0 0;font-size:8px;line-height:1.5;letter-spacing:.12em}
-.guest-shell.guest-page .guest-opening[data-motion][data-paused='true'] * {animation-play-state:paused!important}
+.guest-shell.guest-page .guest-opening[data-phase][data-paused='true'] * {animation-play-state:paused!important}
 @keyframes welcome-phone-float {0%,100%{transform:translate3d(-7px,12px,0) rotate(-6deg)}50%{transform:translate3d(8px,-16px,0) rotate(2deg)}}
 @keyframes welcome-card-float {0%,100%{transform:translate3d(0,4px,0) rotate(4deg)}50%{transform:translate3d(-7px,-10px,0) rotate(-1deg)}}
 @keyframes welcome-card-sway {0%,100%{transform:translate3d(-3px,6px,0) rotate(-4deg)}50%{transform:translate3d(7px,-8px,0) rotate(1deg)}}
@@ -137,17 +136,13 @@
  .guest-shell .guest-opening .opening-invitation>small {display:none}
 }
 @media(prefers-reduced-motion:reduce) {
- .guest-shell .guest-opening[data-motion='gentle'] .tutorial-phone-motion {animation:welcome-phone-gentle 6s var(--opening-fold) infinite!important}
- .guest-shell .guest-opening[data-motion='gentle'] .tutorial-floating {animation:welcome-card-gentle 5s var(--opening-fold) infinite!important;transform:none}
- /* Full motion is an explicit guest choice when their device requests reduced motion. */
- .guest-shell .guest-opening[data-motion='full'] .tutorial-phone-motion {animation:welcome-phone-float 4s var(--opening-fold) infinite!important}
- .guest-shell .guest-opening[data-motion='full'] .floating-top {animation:welcome-card-float 5s var(--opening-fold) -1.6s infinite!important}
- .guest-shell .guest-opening[data-motion='full'] .floating-bottom {animation:welcome-card-sway 6s var(--opening-fold) -3s infinite!important}
- .guest-shell .guest-opening[data-motion='full'] .demo-voice .demo-round,.guest-shell .guest-opening[data-motion='full'] .demo-shutter>span {animation:voice-breathe 1s var(--opening-fold) infinite!important}
- .guest-shell .guest-opening[data-motion='full'] .demo-wave i {animation:demo-wave 750ms var(--opening-fold) infinite alternate!important}
- .guest-shell .guest-opening[data-motion='full'] .demo-person {animation:welcome-person-sway 3s var(--opening-fold) infinite!important}
- .guest-shell .guest-opening[data-motion='full'] .demo-note-paper svg,.guest-shell .guest-opening[data-motion='full'] .demo-send>svg {animation:voice-breathe 2s var(--opening-fold) infinite!important}
+ /* Welcome motion always starts automatically, as requested; keep other reduced-motion rules. */
+ .guest-shell .guest-opening .tutorial-phone-motion {animation:welcome-phone-float 4s var(--opening-fold) infinite!important}
+ .guest-shell .guest-opening .floating-top {animation:welcome-card-float 5s var(--opening-fold) -1.6s infinite!important}
+ .guest-shell .guest-opening .floating-bottom {animation:welcome-card-sway 6s var(--opening-fold) -3s infinite!important}
+ .guest-shell .guest-opening .demo-voice .demo-round,.guest-shell .guest-opening .demo-shutter>span {animation:voice-breathe 1s var(--opening-fold) infinite!important}
+ .guest-shell .guest-opening .demo-wave i {animation:demo-wave 750ms var(--opening-fold) infinite alternate!important}
+ .guest-shell .guest-opening .demo-person {animation:welcome-person-sway 3s var(--opening-fold) infinite!important}
+ .guest-shell .guest-opening .demo-note-paper svg,.guest-shell .guest-opening .demo-send>svg {animation:voice-breathe 2s var(--opening-fold) infinite!important}
  .guest-shell .guest-opening .opening-heading,.guest-shell .guest-opening .tutorial-area {animation:none}
 }
-@keyframes welcome-phone-gentle {0%,100%{opacity:1}50%{opacity:.86}}
-@keyframes welcome-card-gentle {0%,100%{opacity:1}50%{opacity:.72}}

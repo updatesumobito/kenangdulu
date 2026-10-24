@@ -1,17 +1,15 @@
 'use client';
 
 import {useEffect,useRef,useState,type ReactNode} from 'react';
-import {ArrowRight,Camera,Check,Heart,Mic,Pause,Play,RotateCcw,Send,UserRound,MessageCircle} from 'lucide-react';
+import {ArrowRight,Camera,Check,Heart,Mic,Play,RotateCcw,Send,UserRound,MessageCircle} from 'lucide-react';
 
 import {GuestThemeToggle,useGuestAppearance} from './guest-shell';
 
 type Step = {id:string,label:string,title:string,description:string};
 export default function GuestOpening({name,date,hashtag,modes=[],children}:{name:string,date:string,hashtag?:string,modes?:string[],children:ReactNode}) {
  const {setIntroOpen}=useGuestAppearance();
- const [phase,setPhase]=useState<'idle'|'opening'|'entered'>('idle'),[ready,setReady]=useState(false),[step,setStep]=useState(0),[visible,setVisible]=useState(true),[reduced,setReduced]=useState(false),[paused,setPaused]=useState(false),[phoneScale,setPhoneScale]=useState(.75);
+ const [phase,setPhase]=useState<'idle'|'opening'|'entered'>('idle'),[ready,setReady]=useState(false),[step,setStep]=useState(0),[visible,setVisible]=useState(true),[reduced,setReduced]=useState(false),[phoneScale,setPhoneScale]=useState(.75);
  const content=useRef<HTMLDivElement>(null),scene=useRef<HTMLDivElement>(null),enterButton=useRef<HTMLButtonElement>(null);
- const [motionEnabled,setMotionEnabled]=useState(false);
- const gentleMotion=reduced&&!motionEnabled;
  const steps:Step[]=[{id:'name',label:'Isi nama',title:'Kenalan dulu, yuk.',description:'Isi namamu dan setujui penyimpanan kenangan sebelum mulai. Kalau diminta, masukkan juga kode undangan.'}];
  if(modes.some(mode=>['disposable_photo','photo_strip','gif'].includes(mode)))steps.push({id:'camera',label:'Jepret',title:'Senyum. Jepret. Simpan.',description:'Pilih mode kamera, izinkan akses, lalu ambil foto. Bisa ganti kamera depan atau belakang dan ulangi sampai kamu suka.'});
  if(modes.includes('voice'))steps.push({id:'voice',label:'Pesan suara',title:'Ada doa yang ingin didengar.',description:'Buka Pesan suara, izinkan mikrofon, lalu rekam. Dengarkan kembali, simpan ke draft, lalu lanjut ke langkah berikutnya.'});
@@ -19,7 +17,7 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  if(modes.includes('wish_card'))steps.push({id:'note',label:'Tulis doa',title:'Sedikit kata, banyak makna.',description:'Tulis doa atau cerita kecil. Ucapanmu disimpan secara pribadi untuk pengantin.'});
  steps.push({id:'send',label:'Kirim',title:'Satu kiriman, satu kenangan.',description:'Periksa semua foto, suara, dan ucapanmu, lalu kirim secara pribadi untuk pengantin. Tunggu konfirmasi bahwa kenanganmu sudah tersimpan.'});
  const current=steps[Math.min(step,steps.length-1)];
- useEffect(()=>{setPhase('idle');setStep(0);setPaused(false);setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[name,date]);
+ useEffect(()=>{setPhase('idle');setStep(0);setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[name,date]);
  useEffect(()=>{
   if(!ready||phase==='entered')return;
   const bodyOverflow=document.body.style.overflow,rootOverflow=document.documentElement.style.overflow;
@@ -33,10 +31,10 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
   content.current?.querySelector<HTMLElement>('h1')?.focus({preventScroll:true});
  },[phase]);
  useEffect(()=>{
-  if(!ready||phase!=='idle'||!visible||paused||step>=steps.length-1)return;
+  if(!ready||phase!=='idle'||!visible||step>=steps.length-1)return;
   const timer=setTimeout(()=>setStep(value=>Math.min(value+1,steps.length-1)),4000);
   return()=>clearTimeout(timer);
- },[ready,phase,visible,paused,step,steps.length]);
+ },[ready,phase,visible,step,steps.length]);
  useEffect(()=>{setIntroOpen(phase!=='entered');return()=>setIntroOpen(false)},[phase,setIntroOpen]);
  useEffect(()=>{
   const element=scene.current;if(!element||phase==='entered')return;
@@ -44,10 +42,9 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
   resize();const observer=new ResizeObserver(resize);observer.observe(element);return()=>observer.disconnect();
  },[phase]);
  function enter(){if(phase==='idle')setPhase('opening')}
- function toggleMotion(){if(gentleMotion){setMotionEnabled(true);setPaused(false)}else setPaused(value=>!value)}
  return <>
-  {phase!=='entered'&&<section className="guest-opening" data-phase={phase} data-reduced={reduced} data-motion={gentleMotion?'gentle':'full'} data-paused={paused||!visible} aria-labelledby="opening-title" onKeyDown={ev=>{if(ev.key==='Escape')setPhase('entered')}}>
-   <header className="tutorial-top"><span>kenang dulu <small>THE MEMORY ARCHIVE</small></span><div className="tutorial-header-actions"><button type="button" className="opening-motion-toggle" onClick={toggleMotion} aria-label={gentleMotion?'Aktifkan animasi penuh':paused?'Lanjutkan gerakan dan panduan':'Jeda gerakan dan panduan'} aria-pressed={!gentleMotion&&!paused}>{gentleMotion||paused?<Play size={17}/>:<Pause size={17}/>}<span>{gentleMotion?'Aktifkan animasi':paused?'Lanjutkan animasi':'Jeda animasi'}</span></button><GuestThemeToggle/></div></header>
+  {phase!=='entered'&&<section className="guest-opening" data-phase={phase} data-reduced={reduced} data-paused={!visible} aria-labelledby="opening-title" onKeyDown={ev=>{if(ev.key==='Escape')setPhase('entered')}}>
+   <header className="tutorial-top"><span>kenang dulu <small>THE MEMORY ARCHIVE</small></span><div className="tutorial-header-actions"><GuestThemeToggle/></div></header>
    <div className="opening-composition">
     <div className="opening-heading"><p className="eyebrow">SELAMAT DATANG DI HARI BAHAGIA KAMI</p><h1 id="opening-title">{name}</h1><p className="opening-tagline">Simpan momen.<br/><em>Titipkan doa.</em></p><small>{date}{hashtag&&<> · {hashtag}</>}</small>
      <p className="opening-intro">Foto, suara, dan doa terbaikmu. Kenangan kecil yang akan selalu berarti.</p>
@@ -75,6 +72,6 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
    <div className="opening-actions"><div className="opening-invitation"><button ref={enterButton} className="opening-enter" onClick={enter} disabled={phase==='opening'}>Mulai buat kenangan <ArrowRight size={17}/></button><small>Kamera & mikrofon hanya aktif saat kamu memilihnya.</small></div><span className="opening-actions-note"><Heart size={13}/> Kenangan kecil, berarti besar.</span></div>
    <footer><span>TAKE A MOMENT. MAKE A MEMORY.</span><span>{hashtag||'KEPT WITH KENANG DULU'}</span></footer>
   </section>}
-  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPaused(false);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
+  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
  </>;
 }
