@@ -599,3 +599,50 @@ Slate `#4B5A52`, Deep Moss `#39443E`, Fog Linen `#F2EEE8`, Soft Mist
 `#E5E8E2`, Muted Copper `#B98B6A`, dengan **Fraunces + Manrope**.
 Terapkan sebagai pembaruan visual saja; seluruh fungsi existing wajib
 tetap utuh.
+
+## 14. Status implementasi — 24 Oktober 2026
+
+Audit kode menemukan bahwa implementasi sebelumnya baru mencakup beranda
+dan sebagian admin. Styling global, halaman tamu, portal pelanggan/vendor,
+dan mode personal masih menggunakan palet serta font lama.
+
+Sudah dilengkapi pada kode:
+
+- Token Heritage Moss global beserta skala warna, spacing, radius, shadow,
+  dan tipografi di `src/app/heritage-tokens.css`.
+- Fraunces untuk judul/editorial dan Manrope untuk UI, menggunakan font
+  lokal yang sudah tersedia tanpa dependency atau layanan font baru.
+- Palet bersama untuk halaman publik, autentikasi, checkout, workspace,
+  admin, personal, tamu, galeri, album pengantin, live wall, serta state UI.
+- Mode terang/gelap mengikuti mekanisme `data-guest-theme` yang sudah ada;
+  selector `.dark` dan `data-theme="dark"` tetap didukung tanpa toggle baru.
+- Kontrol form, tombol, border, fokus keyboard, tabel, badge, dialog,
+  pesan error, dan reduced motion menggunakan token yang konsisten.
+- Import stylesheet dipusatkan di root layout agar urutannya konsisten
+  saat berpindah halaman.
+- Identitas Kenang Dulu pada wordmark, header/footer, dan judul browser.
+  Aset logo final SVG yang disetujui belum ditemukan di repository;
+  wordmark/ikon existing dipertahankan sebagai representasi sementara.
+
+Perbaikan kontras yang diperiksa secara numerik:
+
+| Pasangan warna | Rasio setelah perbaikan |
+| --- | --- |
+| Helper light di atas linen | 5,40:1 |
+| Teks interaktif dark di atas raised surface | 7,09:1 |
+| Label tombol primary dark | 5,30:1 |
+| Border input light / dark terhadap surface input | 3,58:1 / 3,30:1 |
+
+Token `--color-text-muted` dan `--color-primary` tetap mengikuti spesifikasi.
+Untuk teks kecil, gunakan secondary text dan `--color-interactive-text`
+agar kontrasnya cukup pada surface terkait.
+
+Route, API, database, auth, permission, validasi, state, serta alur submit
+tidak diubah. Pilihan tema acara, warna frame/overlay dari data pengguna,
+dan hasil media tetap dipertahankan. Font artwork frame lama dipertahankan
+secara khusus agar preview artwork tidak ikut berganti font UI.
+
+Belum diverifikasi melalui browser: seluruh ukuran layar, zoom, rendering
+font fallback, dan interaksi end-to-end pada semua halaman. Checklist
+acceptance di atas bukan laporan hasil tes. Tidak menjalankan build,
+lint, typecheck, suite/E2E, atau deploy, sesuai preferensi pengguna.

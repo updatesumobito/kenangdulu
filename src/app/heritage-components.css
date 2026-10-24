@@ -1,0 +1,87 @@
+/* Shared control treatment. Layout, breakpoints, media and event handlers stay
+   with their existing components. Import after the existing presentation CSS. */
+body{font-family:var(--font-ui);line-height:1.65}
+p{line-height:1.65}
+button,input,select,textarea,table{font-family:var(--font-ui)}
+button,.button{border-radius:var(--radius-md);font-weight:600;line-height:1.35;color:var(--color-primary-foreground)}
+:is(button:not([class]),.button:not(.outline):not(.text-link)):active:not(:disabled){background-color:var(--color-primary-active)}
+:is(button,.button).outline{color:var(--color-text);border-color:var(--color-control-border);background:var(--color-surface)}
+:is(button,.button).outline:hover{background:var(--color-bg-subtle)}
+:is(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:2px solid var(--color-focus);outline-offset:3px}
+:is(button,input,select,textarea):disabled{cursor:not-allowed}
+input:not([type=checkbox]):not([type=radio]),select,textarea{border-radius:var(--radius-md);border-color:var(--color-control-border);background:var(--color-surface-raised);color:var(--color-text)}
+input::placeholder,textarea::placeholder{color:var(--color-text-secondary);opacity:1}
+input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--color-primary)}
+.card,.event-card,.gallery-card{border-radius:var(--radius-lg)}
+.plan,.feature{border-radius:var(--radius-lg)}
+.badge{border-radius:var(--radius-sm)}
+.card h2{font-family:var(--font-ui);font-size:var(--type-h3);font-weight:650;line-height:1.35;letter-spacing:-.02em}
+.prose .card,.auth-grid>div>p,.order-summary :is(p,li),.feature p,.step p,.faq details p,.vendor-banner p,.plan :is(p,li){font-size:14px}
+.notice,.check,.upload,.empty,table{font-size:14px}
+.notice a.button{color:var(--color-primary-foreground)}
+.plan-tag{color:var(--color-primary-foreground)}
+.modal{background:var(--color-overlay)}
+.modal>.card,dialog{background:var(--color-surface-raised);color:var(--color-text);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-md)}
+dialog::backdrop{background:var(--color-overlay)}
+.skip{background:var(--color-surface-raised);color:var(--color-text)}
+.sidebar nav a.active{box-shadow:inset 3px 0 var(--color-primary);font-weight:700}
+.sidebar nav a:hover{background:var(--color-bg-subtle)}
+tbody tr:hover{background:var(--color-bg-subtle)}
+.tabs button.active{border-bottom-color:var(--color-primary);font-weight:700}
+.notice.error{background:var(--color-danger-bg);color:var(--color-danger);border-color:var(--color-danger-border)}
+.badge[data-status=live],.badge[data-status=paid],.badge[data-status=approved],.badge[data-status=completed]{background:var(--color-success-bg);color:var(--color-success);border:1px solid var(--color-success-border)}
+.badge[data-status=payment_review],.badge[data-status=pending]{background:var(--color-warning-bg);color:var(--color-warning);border:1px solid var(--color-warning-border)}
+.badge[data-status=rejected],.badge[data-status=failed]{background:var(--color-danger-bg);color:var(--color-danger);border:1px solid var(--color-danger-border)}
+.badge[data-status=processing]{background:var(--color-info-bg);color:var(--color-info);border:1px solid var(--color-info-border)}
+.feature h3,.plan h3,.card h3,.event-card h3,.form h2,.metrics strong,.price{font-family:var(--font-ui);font-weight:650;letter-spacing:-.02em;line-height:1.35}
+.feature h3,.event-card h3{font-size:var(--type-h4)}
+.metrics strong,.price,table{font-variant-numeric:tabular-nums}
+.metrics .card>strong,.workspace.admin-console .event-card-copy h3{font-family:var(--font-ui);font-weight:650}
+.frame-caption,.frame-overlay{font-family:'Playfair Display Variable',Georgia,serif}
+.brand{letter-spacing:-.035em;white-space:nowrap}
+.brand>span{max-width:240px;white-space:normal;font-weight:500;letter-spacing:.12em;line-height:1.5;font-size:9px}
+.header nav a,.field>span,.check,.sidebar nav a,.text-link,summary{font-size:14px}
+.workspace-content :is(table,td,.field>span,.check,summary){font-size:14px}
+.workspace-content :is(th,td small,.badge){font-size:12px}
+.workspace-content :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px}
+.workspace.admin-console :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){font-size:16px;border-color:var(--color-control-border)}
+.workspace.admin-console :is(.field>span,.check,summary,td){font-size:14px}
+.workspace.admin-console :is(th,td small,.badge){font-size:12px}
+.workspace.admin-console :is(button,.button){font-size:14px}
+.kd-home :is(.feature h3,.plan h3){font-family:var(--font-ui);font-weight:650}
+.kd-home .kd-coming h1{font-size:var(--type-display);line-height:1.12}
+.kd-home :is(.feature p,.step p,.faq details p,.vendor-banner p,.plan li,.plan>p){font-size:14px;line-height:1.65}
+.kd-home :is(.header nav a,.faq summary){font-size:14px}
+.kd-home .kd-coming-description{font-size:16px;line-height:1.65}
+.kd-home .kd-memory-card{background:var(--color-surface);border-color:var(--color-border);box-shadow:var(--shadow-md)}
+.kd-home .kd-memory-card>span{color:var(--color-text-secondary)}
+.kd-home .kd-memory-back .kd-memory-art{background:var(--color-bg-subtle);color:var(--color-text)}
+.kd-home .kd-memory-back .kd-memory-art>svg{color:var(--color-interactive-text)}
+.kd-brand-icon,.kd-icon-tile{color:var(--color-interactive-text)}
+.guest-shell.guest-page :is(button:not([class]),a.button:not(.outline)):hover:not(:disabled){background-color:var(--color-primary-hover)}
+.guest-shell.guest-page :is(button:not([class]),a.button:not(.outline)):active:not(:disabled){background-color:var(--color-primary-active)}
+.guest-shell.guest-page :is(button,a.button).outline:hover{background:var(--g-soft)}
+.guest-shell.guest-page :is(a,button,input,select,textarea,summary):focus-visible{outline-color:var(--color-focus)}
+.guest-shell.guest-page .tutorial-phone{color-scheme:inherit}
+.guest-shell.guest-page .tutorial-phone .demo-action{background:var(--color-primary);color:var(--color-primary-foreground)}
+.guest-shell .demo-action,.guest-shell .demo-consent svg{color:var(--color-primary-foreground)}
+.guest-shell .tutorial-steps button[aria-current='step']>span{color:var(--color-primary-foreground);font-weight:700}
+.guest-shell .guest-opening .opening-enter{border-radius:var(--radius-md)}
+.guest-shell .guest-opening .opening-enter:hover{background:var(--color-primary-hover);color:var(--color-primary-foreground)}
+.guest-shell .guest-opening .phone-screen :is(h3,.demo-note-paper p,.demo-send>p){color:var(--color-text)}
+.guest-shell .camera-idle{background:var(--color-media-bg)}
+.guest-shell .guest-opening{background:var(--color-bg)}
+.guest-shell .guest-opening .tutorial-top>span>small{letter-spacing:.12em}
+/* Existing welcome height reservations remain intact; scrolling is available
+   when enlarged text needs more room. No content is clipped at text zoom. */
+@media(max-height:600px){.guest-shell .guest-opening{overflow-y:auto;grid-template-rows:auto minmax(420px,1fr) auto auto}}
+@media(max-width:760px){
+ .header nav{flex-wrap:wrap;gap:12px}
+ .kd-home .header nav a{font-size:12px}
+ .brand>span{max-width:190px;font-size:8px}
+ .guest-shell .guest-opening .tutorial-top>span>small{display:block;margin:5px 0 0;font-size:7px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}

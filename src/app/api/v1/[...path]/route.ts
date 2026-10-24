@@ -1,5 +1,6 @@
 import {guestSettings} from '@/lib/guest-settings';
 import {guestPath} from '@/lib/guest-path';
+import {guestNoteId} from '@/lib/guest-note-id';
 import { NextRequest,NextResponse,after } from 'next/server';
 import { cookies } from 'next/headers';
 import {z} from 'zod';
@@ -260,6 +261,12 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   }
   if(m[2]==='gallery'&&method==='GET')return ok(await gallery(e,url,false));
  }
+ if(p==='guest/me'&&method==='PATCH'){
+  const s=await guestSession(),b=z.object({name:z.string().trim().min(1).max(80)}).parse(await body(req));
+  await checkLive(await event(s.event_id));
+  await rows('UPDATE guests SET name=$3 WHERE id=$1 AND event_id=$2',[s.guest_id,s.event_id,b.name]);
+  return ok({name:b.name});
+ }
  if(p==='guest/me/limits'&&method==='GET'){
   const s=await guestSession(),e=await event(s.event_id);const n=await one("SELECT count(*)::int AS count FROM intents WHERE guest_id=$1 AND kind='disposable_photo' AND (state='finalized' OR (state IN ('reserved','uploaded') AND expires_at>now()))",[s.guest_id]);return ok({eventId:e.id,guestId:s.guest_id,name:s.name,verified:s.verified,remaining:Math.max(0,Math.min(e.snapshot.perGuest,s.snapshot.settings.perGuest)-n.count),captureSnapshot:s.snapshot});
  }
@@ -280,7 +287,18 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
  }
  m=p.match(/^guest\/(?:media|video)\/([\w-]+)\/finalize$/);if(m&&method==='POST'){const result=await finalize(uuid.parse(m[1]));startWorker();return ok({id:result.id,processing:result.processing});}
  if((p==='guest/notes'||p==='guest/wishes')&&method==='POST'){
-  const s=await guestSession(),b=z.object({text:z.string().min(1).max(1500),cardStyle:z.enum(['plain','botanical','romance']).default('plain'),attachmentIds:z.array(uuid).max(3).default([]),consentPublic:z.boolean().default(false)}).parse(await body(req));const id=uid();await (await database()).transaction(async tx=>{const e=await one('SELECT * FROM events WHERE id=$1 FOR UPDATE',[s.event_id],tx);await checkLive(e);if(b.attachmentIds.length){const photos=await rows("SELECT id FROM media WHERE event_id=$1 AND guest_id=$2 AND id=ANY($3::uuid[]) AND kind IN ('disposable_photo','photo_strip','gif') AND moderation<>'deleted'",[e.id,s.guest_id,b.attachmentIds],tx);if(photos.length!==new Set(b.attachmentIds).size)fail('FORBIDDEN','Foto pendamping tidak diizinkan.',403);}if(!e.snapshot.frames&&b.cardStyle!=='plain')fail('PLAN_FEATURE_UNAVAILABLE','Kartu dekoratif tersedia pada Classic ke atas.',403);if(!s.snapshot.settings.modes.includes('wish_card'))fail('MODE_DISABLED','Ucapan tidak diaktifkan.',403);if((await rows("SELECT id FROM media WHERE event_id=$1 AND kind='wish_card'",[e.id],tx)).length>=e.snapshot.notes)fail('EVENT_QUOTA_EXCEEDED','Kuota ucapan habis.',409);await tx.query("INSERT INTO media(id,event_id,guest_id,kind,text_content,author,consent,privacy,processing,snapshot) VALUES($1,$2,$3,'wish_card',$4,$5,$6,$7,'ready',$8)",[id,e.id,s.guest_id,b.text,s.name,b.consentPublic,b.consentPublic?'public':'private_owner',json({cardStyle:b.cardStyle,attachmentIds:[...new Set(b.attachmentIds)]})]);});return ok({id},201);
+  const s=await guestSession(),b=z.object({text:z.string().trim().min(1).max(1500),cardStyle:z.enum(['plain','botanical','romance']).default('plain'),attachmentIds:z.array(uuid).max(3).default([]),idempotencyKey:z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/).optional()}).parse(await body(req));
+  const result=await (await database()).transaction(async tx=>{
+   const e=await one('SELECT * FROM events WHERE id=$1 FOR UPDATE',[s.event_id],tx);
+   const id=b.idempotencyKey?guestNoteId(e.id,s.guest_id,b.idempotencyKey):uid();
+   if(b.idempotencyKey){const old=await one("SELECT id,text_content FROM media WHERE event_id=$1 AND guest_id=$2 AND kind='wish_card' AND id=$3",[e.id,s.guest_id,id],tx);if(old){if(old.text_content!==b.text)fail('IDEMPOTENCY_CONFLICT','Ucapan berbeda dari kiriman sebelumnya.',409);return {id:old.id};}}
+   await checkLive(e);
+   if(b.attachmentIds.length){const photos=await rows("SELECT id FROM media WHERE event_id=$1 AND guest_id=$2 AND id=ANY($3::uuid[]) AND kind IN ('disposable_photo','photo_strip','gif') AND moderation<>'deleted'",[e.id,s.guest_id,b.attachmentIds],tx);if(photos.length!==new Set(b.attachmentIds).size)fail('FORBIDDEN','Foto pendamping tidak diizinkan.',403);}
+   if(!e.snapshot.frames&&b.cardStyle!=='plain')fail('PLAN_FEATURE_UNAVAILABLE','Kartu dekoratif tersedia pada Classic ke atas.',403);
+   if(!guestSettings(e.slug,s.snapshot.settings).modes.includes('wish_card'))fail('MODE_DISABLED','Ucapan tidak diaktifkan.',403);
+   const count=await one("SELECT count(*)::int AS count FROM media WHERE event_id=$1 AND kind='wish_card'",[e.id],tx);if(count.count>=e.snapshot.notes)fail('EVENT_QUOTA_EXCEEDED','Kuota ucapan habis.',409);
+   await tx.query("INSERT INTO media(id,event_id,guest_id,kind,text_content,author,consent,privacy,processing,snapshot) VALUES($1,$2,$3,'wish_card',$4,$5,false,'private_owner','ready',$6)",[id,e.id,s.guest_id,b.text,s.name,json({cardStyle:b.cardStyle,attachmentIds:[...new Set(b.attachmentIds)]})]);return {id};
+  });return ok(result,201);
  }
  m=p.match(/^media\/([\w-]+)(?:\/(access|file|report))?$/);
  if(m){uuid.parse(m[1]);const media=await one('SELECT * FROM media WHERE id=$1',[m[1]]),action=m[2];if(action==='report'&&method==='POST'){const b=z.object({reason:z.string().min(5).max(500)}).parse(await body(req));await mediaAccess(media);await rows('INSERT INTO reports(id,media_id,reason) VALUES($1,$2,$3)',[uid(),media.id,b.reason]);return ok({reported:true});}

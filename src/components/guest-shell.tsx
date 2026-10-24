@@ -21,7 +21,7 @@ export default function GuestShell({event,activeMode='home',navigation=true,bran
   update();media.addEventListener('change',update);window.addEventListener('storage',update);
   return()=>{media.removeEventListener('change',update);window.removeEventListener('storage',update)};
  },[]);
- function applyTheme(next:boolean){document.documentElement.dataset.guestTheme=next?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',next?'#171315':'#f8f5f0')}
+ function applyTheme(next:boolean){document.documentElement.dataset.guestTheme=next?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',next?'#1d2320':'#f2eee8')}
  function toggle(){const next=!dark;setDark(next);applyTheme(next);try{localStorage.setItem('komukuna-guest-theme',next?'dark':'light')}catch{}}
  const base=guestPath(event.slug),modes:string[]=event.settings.modes;
  const camera=modes.includes('disposable_photo')?'disposable':modes.includes('photo_strip')?'photo':modes.includes('gif')?'creative':null;
@@ -33,7 +33,7 @@ export default function GuestShell({event,activeMode='home',navigation=true,bran
   ...(event.settings.gallery?[{id:'gallery',label:'Galeri',href:base+'/gallery',icon:Images}]:[])];
  return <AppearanceContext.Provider value={{dark,toggle,setIntroOpen}}><div className={'guest-page guest-shell theme-'+event.settings.theme} data-intro-open={introOpen} data-navigation={navigation}>
   <header className="guest-app-header" inert={introOpen} aria-hidden={introOpen||undefined}>
-   <Link className="guest-app-brand" href={brandHref||base} aria-label={brandHref?'Album pengantin '+event.name:'Kembali ke acara '+event.name}><span className="guest-brand-mark"><Heart size={18} strokeWidth={1.5}/></span><span>komukuna<small>VIRTUAL MEMORIES</small></span></Link>
+   <Link className="guest-app-brand" href={brandHref||base} aria-label={brandHref?'Album pengantin '+event.name:'Kembali ke acara '+event.name}><span className="guest-brand-mark"><Heart size={18} strokeWidth={1.5}/></span><span>kenang dulu<small>THE MEMORY ARCHIVE</small></span></Link>
    <div className="guest-header-end"><span className="guest-header-event">{event.name}</span><GuestThemeToggle/></div>
   </header>
   {navigation&&<nav className="guest-bottom-bar" aria-label="Navigasi acara" inert={introOpen} aria-hidden={introOpen||undefined}>{items.map(({id,label,href,icon:Icon})=>{const active=id===activeMode||id==='camera'&&['disposable_photo','photo_strip','gif'].includes(activeMode);return <Link key={id} href={href} prefetch={false} className={'guest-nav-item '+(id==='camera'?'guest-nav-camera':'')} aria-current={active?'page':undefined}><span className="guest-nav-icon"><Icon size={21} strokeWidth={active?2:1.65}/></span><span>{label}</span></Link>})}</nav>}

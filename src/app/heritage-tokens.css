@@ -1,0 +1,42 @@
+/* Shared Heritage Moss palette. The existing guest theme preference remains
+   the source of truth; explicit application theme selectors also remain valid. */
+@font-face{font-family:Manrope;src:url('/fonts/manrope.ttf') format('truetype');font-style:normal;font-weight:200 800;font-display:swap}
+@font-face{font-family:Fraunces;src:url('/fonts/fraunces.ttf') format('truetype');font-style:normal;font-weight:100 900;font-display:swap}
+/* Retained only for existing frame artwork; UI uses Fraunces and Manrope. */
+@font-face{font-family:'Playfair Display Variable';src:url('/fonts/playfair-display.woff2') format('woff2');font-style:normal;font-weight:400 900;font-display:swap}
+
+:root{
+ color-scheme:light;
+ --kd-forest:#4B5A52;--kd-moss-deep:#39443E;--kd-linen:#F2EEE8;--kd-mist:#E5E8E2;--kd-copper:#B98B6A;--kd-copper-soft:#D8B8A1;--kd-charcoal:#2B312E;--kd-moss-gray:#6B746E;--kd-stone:#D7D8D2;--kd-white:#FCFBF8;
+ --kd-forest-50:#F4F6F5;--kd-forest-100:#E7ECE9;--kd-forest-200:#CDD7D1;--kd-forest-300:#AEBCAF;--kd-forest-400:#8A9B90;--kd-forest-500:#6E8075;--kd-forest-600:var(--kd-forest);--kd-forest-700:var(--kd-moss-deep);--kd-forest-800:#2C332F;--kd-forest-900:#1D2320;
+ --kd-copper-50:#FBF7F4;--kd-copper-100:#F3E5DC;--kd-copper-200:#E9D0C0;--kd-copper-300:var(--kd-copper-soft);--kd-copper-400:#CB9D7F;--kd-copper-500:var(--kd-copper);--kd-copper-600:#9F7358;--kd-copper-700:#7D5945;--kd-copper-800:#5B4031;--kd-copper-900:#403027;
+ --color-bg:var(--kd-linen);--color-bg-subtle:var(--kd-mist);--color-surface:var(--kd-white);--color-surface-raised:#FFFFFF;
+ --color-primary:var(--kd-forest);--color-primary-hover:var(--kd-moss-deep);--color-primary-active:var(--kd-forest-800);--color-primary-foreground:#FFFFFF;
+ --color-text:var(--kd-charcoal);--color-text-secondary:#59635C;--color-text-muted:var(--kd-moss-gray);--color-border:var(--kd-stone);--color-border-strong:#BFC5BD;--color-control-border:#808A81;
+ --color-interactive-text:var(--kd-forest);--color-accent:var(--kd-copper);--color-accent-strong:var(--kd-copper-700);--color-accent-subtle:var(--kd-copper-100);--color-focus:var(--kd-copper-700);--color-overlay:rgba(29,35,32,.48);
+ --color-danger:#923F35;--color-danger-bg:#F9E8E5;--color-danger-border:#B86B60;--color-success:#26523D;--color-success-bg:#E7ECE9;--color-success-border:#718E7B;--color-warning:#78531C;--color-warning-bg:#FBF1DF;--color-warning-border:#A18550;--color-info:#345C70;--color-info-bg:#E8F0F4;--color-info-border:#7392A2;
+ --color-media-bg:var(--kd-forest-900);--color-media-text:#F4EFE8;--color-media-muted:#CDD7D1;
+ --font-display:Fraunces,Georgia,serif;--font-ui:Manrope,'Segoe UI',sans-serif;
+ --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;
+ --radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;--radius-pill:999px;
+ --shadow-sm:0 1px 2px rgba(29,35,32,.05);--shadow-md:0 8px 24px rgba(29,35,32,.08);--shadow-lg:0 16px 40px rgba(29,35,32,.12);
+ --type-display:clamp(2.75rem,5.5vw,4.75rem);--type-h1:clamp(2.25rem,4vw,3.5rem);--type-h2:clamp(1.75rem,3vw,2.5rem);--type-h3:1.5rem;--type-h4:1.25rem;
+}
+
+:root[data-guest-theme='dark'],.dark,[data-theme='dark']{
+ color-scheme:dark;
+ --color-bg:#1D2320;--color-bg-subtle:#252D29;--color-surface:#2C332F;--color-surface-raised:#343D37;
+ --color-primary:var(--kd-copper);--color-primary-hover:var(--kd-copper-400);--color-primary-active:var(--kd-copper-soft);--color-primary-foreground:#1D2320;
+ --color-text:#F4EFE8;--color-text-secondary:#D3D7D2;--color-text-muted:#A7B0A9;--color-border:#3A443F;--color-border-strong:#56635A;--color-control-border:#7F8F83;
+ --color-interactive-text:#E5C8B4;--color-accent:var(--kd-copper-soft);--color-accent-strong:#E5C8B4;--color-accent-subtle:#403027;--color-focus:var(--kd-copper-soft);--color-overlay:rgba(0,0,0,.60);
+ --color-danger:#FFD2DB;--color-danger-bg:#43212C;--color-danger-border:#BF8692;--color-success:#B9E7C9;--color-success-bg:#20382A;--color-success-border:#7FA68B;--color-warning:#EAD2A3;--color-warning-bg:#3D3322;--color-warning-border:#AF9668;--color-info:#BEDDEC;--color-info-bg:#253942;--color-info-border:#80A6B8;
+ --shadow-sm:0 1px 2px rgba(0,0,0,.12);--shadow-md:0 8px 24px rgba(0,0,0,.18);--shadow-lg:0 16px 40px rgba(0,0,0,.24);
+}
+/* Used only before the existing theme bootstrap can set data-guest-theme. */
+@media(prefers-color-scheme:dark){:root:not([data-guest-theme]):not([data-theme='light']):not(.light){
+ color-scheme:dark;
+ --color-bg:#1D2320;--color-bg-subtle:#252D29;--color-surface:#2C332F;--color-surface-raised:#343D37;--color-primary:var(--kd-copper);--color-primary-hover:var(--kd-copper-400);--color-primary-active:var(--kd-copper-soft);--color-primary-foreground:#1D2320;--color-text:#F4EFE8;--color-text-secondary:#D3D7D2;--color-text-muted:#A7B0A9;--color-border:#3A443F;--color-border-strong:#56635A;--color-control-border:#7F8F83;--color-interactive-text:#E5C8B4;--color-accent:var(--kd-copper-soft);--color-accent-strong:#E5C8B4;--color-accent-subtle:#403027;--color-focus:var(--kd-copper-soft);--color-overlay:rgba(0,0,0,.60);
+ --color-danger:#FFD2DB;--color-danger-bg:#43212C;--color-danger-border:#BF8692;--color-success:#B9E7C9;--color-success-bg:#20382A;--color-success-border:#7FA68B;--color-warning:#EAD2A3;--color-warning-bg:#3D3322;--color-warning-border:#AF9668;--color-info:#BEDDEC;--color-info-bg:#253942;--color-info-border:#80A6B8;
+ --shadow-sm:0 1px 2px rgba(0,0,0,.12);--shadow-md:0 8px 24px rgba(0,0,0,.18);--shadow-lg:0 16px 40px rgba(0,0,0,.24);
+}}
+@media(max-width:760px){:root{--type-h3:1.375rem;--type-h4:1.125rem}}

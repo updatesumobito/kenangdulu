@@ -13,10 +13,10 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  const storageKey='komukuna-welcome-floating-v5:'+name+':'+date;
  const steps:Step[]=[{id:'name',label:'Isi nama',title:'Kenalan dulu, yuk.',description:'Isi namamu dan setujui penyimpanan kenangan sebelum mulai. Kalau diminta, masukkan juga kode undangan.'}];
  if(modes.some(mode=>['disposable_photo','photo_strip','gif'].includes(mode)))steps.push({id:'camera',label:'Jepret',title:'Senyum. Jepret. Simpan.',description:'Pilih mode kamera, izinkan akses, lalu ambil foto. Bisa ganti kamera depan atau belakang dan ulangi sampai kamu suka.'});
- if(modes.includes('voice'))steps.push({id:'voice',label:'Pesan suara',title:'Ada doa yang ingin didengar.',description:'Buka Pesan suara, izinkan mikrofon, lalu rekam. Dengarkan kembali atau rekam ulang sebelum dikirim.'});
- if(modes.includes('video_wish'))steps.push({id:'video',label:'Video ucapan',title:'Biar senyummu ikut bercerita.',description:'Pilih kamera depan atau belakang, lalu rekam video ucapan. Lihat kembali hasilnya sebelum mengirim.'});
- if(modes.includes('wish_card'))steps.push({id:'note',label:'Tulis doa',title:'Sedikit kata, banyak makna.',description:'Tulis doa atau cerita kecil. Kamu juga bisa menghubungkannya dengan foto kenanganmu.'});
- steps.push({id:'send',label:'Kirim',title:'Satu kiriman, satu kenangan.',description:'Periksa hasilnya, pilih izin tampil publik jika berkenan, lalu kirim. Tunggu konfirmasi bahwa kenanganmu sudah tersimpan.'});
+ if(modes.includes('voice'))steps.push({id:'voice',label:'Pesan suara',title:'Ada doa yang ingin didengar.',description:'Buka Pesan suara, izinkan mikrofon, lalu rekam. Dengarkan kembali, simpan ke draft, lalu lanjut ke langkah berikutnya.'});
+ if(modes.includes('video_wish'))steps.push({id:'video',label:'Video ucapan',title:'Biar senyummu ikut bercerita.',description:'Video opsional. Pilih kamera depan atau belakang, lalu rekam atau lewati langkah ini. Lihat kembali hasilnya sebelum mengirim.'});
+ if(modes.includes('wish_card'))steps.push({id:'note',label:'Tulis doa',title:'Sedikit kata, banyak makna.',description:'Tulis doa atau cerita kecil. Ucapanmu disimpan secara pribadi untuk pengantin.'});
+ steps.push({id:'send',label:'Kirim',title:'Satu kiriman, satu kenangan.',description:'Periksa semua foto, suara, dan ucapanmu, lalu kirim secara pribadi untuk pengantin. Tunggu konfirmasi bahwa kenanganmu sudah tersimpan.'});
  const current=steps[Math.min(step,steps.length-1)];
  useEffect(()=>{try{if(sessionStorage.getItem(storageKey))setPhase('entered')}catch{}setReady(true);const media=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReduced(media.matches);update();media.addEventListener('change',update);return()=>media.removeEventListener('change',update)},[storageKey]);
  useEffect(()=>{
@@ -46,7 +46,7 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  function enter(){if(phase==='idle')setPhase('opening')}
  return <>
   {phase!=='entered'&&<section className="guest-opening" data-phase={phase} data-reduced={reduced} data-paused={paused||!visible} aria-labelledby="opening-title" onKeyDown={ev=>{if(ev.key==='Escape')setPhase('entered')}}>
-   <header className="tutorial-top"><span>komukuna <small>VIRTUAL</small></span><div className="tutorial-header-actions"><button type="button" className="opening-motion-toggle" onClick={()=>setPaused(value=>!value)} aria-label={paused?'Lanjutkan gerakan dan panduan':'Jeda gerakan dan panduan'} aria-pressed={paused}>{paused?<Play size={17}/>:<Pause size={17}/>}</button><GuestThemeToggle/></div></header>
+   <header className="tutorial-top"><span>kenang dulu <small>THE MEMORY ARCHIVE</small></span><div className="tutorial-header-actions"><button type="button" className="opening-motion-toggle" onClick={()=>setPaused(value=>!value)} aria-label={paused?'Lanjutkan gerakan dan panduan':'Jeda gerakan dan panduan'} aria-pressed={paused}>{paused?<Play size={17}/>:<Pause size={17}/>}</button><GuestThemeToggle/></div></header>
    <div className="opening-composition">
     <div className="opening-heading"><p className="eyebrow">SELAMAT DATANG DI HARI BAHAGIA KAMI</p><h1 id="opening-title">{name}</h1><p className="opening-tagline">Simpan momen.<br/><em>Titipkan doa.</em></p><small>{date}{hashtag&&<> · {hashtag}</>}</small>
      <p className="opening-intro">Foto, suara, dan doa terbaikmu. Kenangan kecil yang akan selalu berarti.</p>
@@ -72,8 +72,8 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
     </div>
    </div>
    <div className="opening-actions"><div className="opening-invitation"><button ref={enterButton} className="opening-enter" onClick={enter} disabled={phase==='opening'}>Mulai buat kenangan <ArrowRight size={17}/></button><small>Kamera & mikrofon hanya aktif saat kamu memilihnya.</small></div><span className="opening-actions-note"><Heart size={13}/> Kenangan kecil, berarti besar.</span></div>
-   <footer><span>TAKE A MOMENT. MAKE A MEMORY.</span><span>{hashtag||'KEPT WITH KOMUKUNA'}</span></footer>
+   <footer><span>TAKE A MOMENT. MAKE A MEMORY.</span><span>{hashtag||'KEPT WITH KENANG DULU'}</span></footer>
   </section>}
-  <div ref={content} inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
+  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
  </>;
 }

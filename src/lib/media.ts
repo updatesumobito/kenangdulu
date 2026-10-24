@@ -51,7 +51,7 @@ export async function reserve(input:any){
   if(kind==='voice'&&usage.filter(v=>v.kind==='voice').length>=p.voice||kind==='video_wish'&&usage.filter(v=>v.kind==='video_wish').length>=p.video)fail('EVENT_QUOTA_EXCEEDED','Kuota rekaman acara telah habis.',409);
   const reservedBytes=Math.max(size*2,isPhoto(kind)?256*1024:kind==='voice'?settings.voiceSec*16000+65536:settings.videoSec*160000+262144);
   if(usage.reduce((n,v)=>n+Number(v.max_bytes),0)+Number(physical.bytes)+Number(frameBytes.bytes)+reservedBytes>p.storage)fail('STORAGE_QUOTA_EXCEEDED','Penyimpanan acara penuh.',409);
-  const intent={id:uid(),event_id:e.id,guest_id:s.guest_id,kind,state:'reserved',max_bytes:reservedBytes,mime,object_key:e.id+'/'+uid(),snapshot:s.snapshot,consent:input.consentPublic===true,privacy:input.consentPublic===true?'public':'private_owner'};
+ const intent={id:uid(),event_id:e.id,guest_id:s.guest_id,kind,state:'reserved',max_bytes:reservedBytes,mime,object_key:e.id+'/'+uid(),snapshot:s.snapshot,consent:false,privacy:'private_owner'};
   await tx.query("INSERT INTO intents(id,event_id,guest_id,client_key,kind,max_bytes,mime,object_key,snapshot,consent,privacy,expires_at,expected_bytes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now()+interval '15 minutes',$12)",[intent.id,e.id,s.guest_id,input.idempotencyKey,kind,intent.max_bytes,mime,intent.object_key,json(s.snapshot),intent.consent,intent.privacy,size]);return intent;
  });
 }
@@ -87,7 +87,7 @@ export async function finalize(intentId:string){
  return (await database()).transaction(async tx=>{
   await tx.query('SELECT id FROM events WHERE id=$1 FOR UPDATE',[i.event_id]);const existing=await one('SELECT * FROM media WHERE intent_id=$1',[i.id],tx);if(existing)return existing;
   const fresh=await one('SELECT state,expires_at FROM intents WHERE id=$1',[i.id],tx);if(fresh.state!=='uploaded'||new Date(fresh.expires_at)<new Date())fail('UPLOAD_INTENT_EXPIRED','Unggahan telah kedaluwarsa.',409);
-  const id=uid();await tx.query("INSERT INTO media(id,intent_id,event_id,guest_id,kind,object_key,mime,bytes,duration,author,consent,privacy,snapshot) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",[id,i.id,i.event_id,i.guest_id,i.kind,i.object_key,info.mime,body.length,info.duration,s.name,i.consent,i.privacy,json(i.snapshot)]);
+  const id=uid();await tx.query("INSERT INTO media(id,intent_id,event_id,guest_id,kind,object_key,mime,bytes,duration,author,consent,privacy,snapshot) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",[id,i.id,i.event_id,i.guest_id,i.kind,i.object_key,info.mime,body.length,info.duration,s.name,false,'private_owner',json(i.snapshot)]);
   await tx.query("UPDATE intents SET state='finalized' WHERE id=$1",[i.id]);await tx.query("INSERT INTO jobs(id,event_id,kind,payload) VALUES($1,$2,'media.process',$3)",[uid(),i.event_id,json({mediaId:id})]);
   return await one('SELECT * FROM media WHERE id=$1',[id],tx);
  });
