@@ -19,7 +19,7 @@
 .guest-shell .guest-opening .opening-heading .opening-intro {display:block;max-width:310px;font-size:13px;line-height:1.8;text-wrap:pretty;margin:20px 0 0}
 .guest-shell .guest-opening .tutorial-area {height:100%;max-height:580px;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:12px;align-self:center}
 .guest-shell .guest-opening .tutorial-scene {height:100%;min-height:0;min-width:0;margin:0;padding:0;overflow:hidden;overflow:clip}
-.guest-shell .guest-opening .tutorial-phone-fit {position:absolute;width:218px;height:350px;left:50%;top:48%;transform-origin:center;pointer-events:none}
+.guest-shell .guest-opening .tutorial-phone-fit {position:absolute;width:218px;height:350px;left:50%;top:50%;transform-origin:center;pointer-events:none}
 .guest-shell .guest-opening .tutorial-phone-motion {width:100%;height:100%;animation:welcome-phone-float 4s var(--opening-fold) infinite}
 .guest-shell .guest-opening .tutorial-phone {position:relative;inset:auto;width:218px;height:350px;transform:none;transform-origin:center;animation:none}
 /* Keep the demonstrations alive after their entrance, including the last step. */
@@ -56,8 +56,8 @@
 .guest-shell .guest-opening .tutorial-orbit {width:min(88%,310px);height:auto;aspect-ratio:1;max-height:95%;top:50%;left:50%;transform:translate(-50%,-50%)}
 .guest-shell .guest-opening .orbit-two {width:min(100%,370px);max-height:110%;transform:translate(-50%,-50%) rotate(-18deg)}
 .guest-shell .guest-opening .tutorial-floating {padding:10px 13px;font-size:10px;border-radius:14px;white-space:nowrap;pointer-events:none;animation:welcome-card-float 5s var(--opening-fold) infinite}
-.guest-shell .guest-opening .floating-top {top:19%;right:0;left:auto;font-size:8px;letter-spacing:.1em;animation-delay:-1.6s}
-.guest-shell .guest-opening .floating-bottom {bottom:16%;left:0;right:auto;animation-name:welcome-card-sway;animation-duration:6s;animation-delay:-3s}
+.guest-shell .guest-opening .floating-top {top:19%;right:12px;left:auto;font-size:8px;letter-spacing:.1em;animation-delay:-1.6s}
+.guest-shell .guest-opening .floating-bottom {bottom:16%;left:12px;right:auto;animation-name:welcome-card-sway;animation-duration:6s;animation-delay:-3s}
 .guest-shell .guest-opening .tutorial-demo-label {display:none}
 .guest-shell .guest-opening .tutorial-explanation {width:100%;max-width:390px;min-height:110px;margin:0 auto;text-align:center;align-self:end}
 .guest-shell .guest-opening .tutorial-step-count {font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.14em;font-variant-numeric:tabular-nums;line-height:1.5}
@@ -98,8 +98,8 @@
  .guest-shell .guest-opening .tutorial-steps button>span {width:25px;height:25px;min-height:25px;font-size:10px}
  .guest-shell .guest-opening .tutorial-steps button>small {font-size:9px;line-height:1.35}
  .guest-shell .guest-opening .tutorial-floating {padding:8px 10px;font-size:8px;border-radius:11px}
- .guest-shell .guest-opening .floating-top {right:0;font-size:6px}
- .guest-shell .guest-opening .floating-bottom {left:0}
+ .guest-shell .guest-opening .floating-top {right:12px;font-size:6px}
+ .guest-shell .guest-opening .floating-bottom {left:12px}
  .guest-shell .guest-opening .opening-actions {display:block;width:100%;max-width:460px;padding:10px 0 0}
  .guest-shell .guest-opening .opening-invitation {width:100%}
  .guest-shell .guest-opening .opening-invitation .opening-enter {width:100%;min-height:48px;font-size:13px;padding:12px 16px}
@@ -134,6 +134,11 @@
  .guest-shell .guest-opening .opening-actions {padding:7px 0 0}
  .guest-shell .guest-opening .opening-invitation .opening-enter {min-height:44px;padding:10px 20px}
  .guest-shell .guest-opening .opening-invitation>small {display:none}
+}
+/* Keep a useful animation area on short screens; let the welcome scroll
+   instead of squeezing the illustration into the date or primary action. */
+@media(max-height:600px) {
+ .guest-shell.guest-page .guest-opening {overflow-y:auto;grid-template-rows:auto minmax(340px,1fr) auto}
 }
 @media(prefers-reduced-motion:reduce) {
  /* Welcome motion always starts automatically, as requested; keep other reduced-motion rules. */

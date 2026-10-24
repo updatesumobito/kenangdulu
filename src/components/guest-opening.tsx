@@ -38,7 +38,9 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
  useEffect(()=>{setIntroOpen(phase!=='entered');return()=>setIntroOpen(false)},[phase,setIntroOpen]);
  useEffect(()=>{
   const element=scene.current;if(!element||phase==='entered')return;
-  const resize=()=>{const {width,height}=element.getBoundingClientRect();setPhoneScale(Math.max(.15,Math.min(1.04,(width-72)/218,(height-24)/350)))};
+  // Reserve the full animated envelope: rotation up to 6deg, translation,
+  // border and shadow, plus 12px of clearance on every side of the scene.
+  const resize=()=>{const {width,height}=element.getBoundingClientRect();setPhoneScale(Math.max(0,Math.min(1.04,(width-24)/286,(height-24)/424)))};
   resize();const observer=new ResizeObserver(resize);observer.observe(element);return()=>observer.disconnect();
  },[phase]);
  function enter(){if(phase==='idle')setPhase('opening')}
