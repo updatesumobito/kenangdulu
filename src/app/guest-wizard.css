@@ -44,6 +44,7 @@ html[data-guest-theme=dark] .guest-shell:has(.guest-wizard){--gw-nav-bg:var(--g-
 .gw-camera-idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:22px;background:linear-gradient(155deg,#39443e,#1d2320)}
 .guest-shell .gw-camera-idle h3{font-family:var(--font-display);font-size:24px;color:var(--color-media-text);font-weight:450;margin:0;line-height:1.2}
 .gw-camera-idle p{font-size:12px;color:var(--color-media-muted);margin:0;max-width:300px;line-height:1.6}
+.guest-shell.guest-page .gw-camera-idle :is(p,small){color:var(--color-media-muted)}
 .guest-wizard .gw-camera-idle button{background:var(--kd-linen);color:var(--kd-charcoal);font-size:12px;border:0;min-height:44px;padding:12px 22px;flex-shrink:0}
 .gw-camera-tag{position:absolute;top:16px;left:16px;z-index:2;border:1px solid #ffffff40;border-radius:999px;padding:6px 10px;background:#0006;color:#fff;font-size:10px;backdrop-filter:blur(6px)}
 .gw-camera-tag.is-recording{color:#fff;background:#923f35}
