@@ -76,6 +76,9 @@ html[data-guest-theme=dark] .guest-shell:has(.guest-wizard){--gw-nav-bg:var(--g-
 .gw-mic-level{margin:16px 0;text-align:center;color:var(--g-muted)}
 .gw-mic-level meter{display:block;width:min(100%,280px);height:18px;margin:auto;accent-color:var(--color-interactive-text)}
 .gw-mic-level p{font-size:13px;line-height:1.5}
+.gm-photo-reset{display:grid;justify-items:center;gap:10px;margin:20px 0;text-align:center}
+.gm-photo-reset>button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+.gm-photo-reset .gw-hint{margin:0}
 .is-recording .gw-wave i{animation:gw-wave 850ms ease-in-out infinite;opacity:.85}
 @keyframes gw-wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
 .gw-record-time{font-size:36px;font-weight:450;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.04em}

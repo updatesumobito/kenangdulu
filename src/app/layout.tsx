@@ -10,6 +10,7 @@ import './couple-album.css';
 import './guest-welcome-screen.css';
 import './guest-responsive.css';
 import './admin-design.css';
+import './admin-album-media.css';
 import './home-design.css';
 import './heritage-components.css';
 import './guest-wizard.css';

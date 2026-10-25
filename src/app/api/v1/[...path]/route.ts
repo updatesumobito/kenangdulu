@@ -1,6 +1,8 @@
 import {guestSettings} from '@/lib/guest-settings';
 import {guestPath} from '@/lib/guest-path';
 import {guestNoteId} from '@/lib/guest-note-id';
+import {guestPhotoIntents,resetGuestPhotoReservations} from '@/lib/guest-photo-recovery';
+import {deleteAdminAlbumMedia,editAdminPhoto} from '@/lib/admin-album-media';
 import { NextRequest,NextResponse,after } from 'next/server';
 import { cookies } from 'next/headers';
 import {z} from 'zod';
@@ -238,6 +240,18 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
  }
  m=p.match(/^(?:partner\/events|events|admin\/events)\/([\w-]+)(?:\/(.+))?$/);
  if(m){const e=await event(m[1]),a=m[2],u=await requireUser();
+  if(a==='albums'&&method==='GET'){await admin();return ok(await coupleAlbums(e.id,url));}
+  if(a==='albums'&&method==='DELETE'){
+   await admin();const b=z.discriminatedUnion('scope',[z.object({scope:z.literal('album'),albumId:z.string().min(1).max(200)}),z.object({scope:z.literal('all'),confirmation:z.string().max(100)})]).parse(await body(req));
+   return ok(await deleteAdminAlbumMedia(e.id,u.id,b.scope==='album'?{albumId:b.albumId}:{all:true,confirmation:b.confirmation}));
+  }
+  const photoAction=a?.match(/^photos\/([\w-]+)$/);
+  if(photoAction&&(method==='PATCH'||method==='DELETE')){
+   await admin();const photoId=uuid.parse(photoAction[1]);
+   if(method==='DELETE')return ok(await deleteAdminAlbumMedia(e.id,u.id,{photoId}));
+   const b=z.object({author:z.string().trim().min(1).max(80),rotation:z.union([z.literal(0),z.literal(90),z.literal(180),z.literal(270)]).default(0)}).parse(await body(req));
+   return ok(await editAdminPhoto(e.id,photoId,u.id,b));
+  }
   if(method==='GET'&&!a){await eventAccess(u,e);const permission=await getPermissions(u,e);return ok({event:e,frames:await rows('SELECT * FROM frames WHERE event_id=$1',[e.id]),usage:await usage(e.id),permissions:permission,staff:permission.edit?await rows('SELECT s.*,u.email,u.name FROM event_staff s JOIN users u ON u.id=s.user_id WHERE event_id=$1',[e.id]):[],invitations:permission.edit?await rows('SELECT id,email,permissions,expires_at FROM staff_invitations WHERE event_id=$1 AND accepted_at IS NULL AND revoked=false AND expires_at>now()',[e.id]):[]});}
   if(a==='staff-invitations'&&method==='POST'){
    if(u.role!=='superadmin'&&!await one('SELECT 1 FROM organizations WHERE id=$1 AND owner_id=$2',[e.org_id,u.id]))fail('FORBIDDEN','Hanya pemilik organisasi dapat mencabut undangan.',403);
@@ -293,7 +307,7 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   if(a==='legal-hold'&&method==='POST'){await admin();const b=z.object({enabled:z.boolean(),reason:z.string().min(5).max(500)}).parse(await body(req));await rows('UPDATE events SET legal_hold=$2 WHERE id=$1',[e.id,b.enabled]);await audit(u.id,'event.legal-hold',{enabled:b.enabled,reason:b.reason},e.id);return ok({done:true});}
   if(a==='media'&&method==='GET'){await eventAccess(u,e);return ok(await gallery(e,url,true));}
   if(a==='moderation'&&method==='POST'){
-   await eventAccess(u,e,'moderate');const b=z.object({ids:z.array(uuid).min(1).max(100),action:z.enum(['approved','hidden','rejected','deleted'])}).parse(await body(req));for(const id of b.ids)await rows('UPDATE media SET moderation=$3 WHERE id=$1 AND event_id=$2',[id,e.id,b.action]);await audit(u.id,'media.moderate',{ids:b.ids,action:b.action},e.id);return ok({done:true});
+   await eventAccess(u,e,'moderate');const b=z.object({ids:z.array(uuid).min(1).max(100),action:z.enum(['approved','hidden','rejected','deleted'])}).parse(await body(req));if(b.action==='deleted'&&e.legal_hold)fail('LEGAL_HOLD','Media dilindungi legal hold.',409);for(const id of b.ids)await rows("UPDATE media SET moderation=$3 WHERE id=$1 AND event_id=$2 AND moderation<>'deleted'",[id,e.id,b.action]);await audit(u.id,'media.moderate',{ids:b.ids,action:b.action},e.id);return ok({done:true});
   }
   if(a==='display-tokens'&&method==='POST'){await eventAccess(u,e,'display');if(!e.snapshot.live)fail('PLAN_FEATURE_UNAVAILABLE','Live wall tidak tersedia pada Mini.',403);const b=await body(req);if(b.revoke){await rows('UPDATE display_tokens SET revoked=true WHERE event_id=$1',[e.id]);return ok({revoked:true});}const t=token();await rows("INSERT INTO display_tokens VALUES($1,$2,now()+interval '24 hours',false)",[hash(t),e.id]);return ok({token:t,url:'/live/'+e.id+'#'+t});}
   if(a==='exports'&&method==='POST'){await eventAccess(u,e,'export');if(Date.now()>+new Date(e.end_at)+e.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa ekspor telah berakhir.',410);const b=z.object({book:z.boolean().default(false),bookLimit:z.number().int().min(1).max(300).default(100)}).parse(await body(req));if(b.book&&!e.snapshot.book)fail('PLAN_FEATURE_UNAVAILABLE','Memory Book tersedia pada Celebration/Signature.',403);const id=uid();await rows('INSERT INTO jobs(id,event_id,user_id,kind,payload) VALUES($1,$2,$3,$4,$5)',[id,e.id,u.id,b.book?'book.pdf':'export.zip',json({bookLimit:b.bookLimit})]);startWorker();return ok({id},202);}
@@ -337,10 +351,15 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   return ok({name:b.name});
  }
  if(p==='guest/me/limits'&&method==='GET'){
-  const s=await guestSession(),e=await event(s.event_id);const n=await one("SELECT count(*)::int AS count FROM intents WHERE guest_id=$1 AND kind='disposable_photo' AND (state='finalized' OR (state IN ('reserved','uploaded') AND expires_at>now()))",[s.guest_id]);return ok({eventId:e.id,guestId:s.guest_id,name:s.name,verified:s.verified,remaining:Math.max(0,Math.min(e.snapshot.perGuest,s.snapshot.settings.perGuest)-n.count),captureSnapshot:s.snapshot});
+  const s=await guestSession(),e=await event(s.event_id),photoIntents=await guestPhotoIntents(await database(),e.id,s.guest_id);return ok({eventId:e.id,guestId:s.guest_id,name:s.name,verified:s.verified,remaining:Math.max(0,Math.min(e.snapshot.perGuest,s.snapshot.settings.perGuest)-photoIntents.length),photoIntents,captureSnapshot:s.snapshot});
+ }
+ if(p==='guest/me/photos/reset'&&method==='POST'){
+  const b=z.object({eventId:uuid,guestId:uuid}).parse(await body(req)),s=await guestSession(b.eventId);if(s.guest_id!==b.guestId)fail('FORBIDDEN','Sesi tamu berubah. Buka kembali halaman acara.',403);
+  const e=await event(s.event_id);await checkLive(e);
+  return ok(await resetGuestPhotoReservations(await database(),e.id,s.guest_id));
  }
  if(p==='guest/memories'&&method==='GET'){
-  const s=await guestSession();return ok({items:await rows("SELECT id,kind,created_at FROM media WHERE event_id=$1 AND guest_id=$2 AND kind IN ('disposable_photo','photo_strip','gif') AND moderation<>'deleted' ORDER BY created_at DESC LIMIT 48",[s.event_id,s.guest_id])});
+  const s=await guestSession();return ok({eventId:s.event_id,guestId:s.guest_id,items:(await rows("SELECT m.id,m.kind,m.created_at,m.intent_id AS \"intentId\",i.client_key AS key,m.mime FROM media m JOIN intents i ON i.id=m.intent_id WHERE m.event_id=$1 AND m.guest_id=$2 AND m.kind IN ('disposable_photo','photo_strip','gif') AND m.moderation<>'deleted' ORDER BY m.created_at DESC LIMIT 300",[s.event_id,s.guest_id])).map(photo=>({...photo,url:'/api/v1/guest/media/'+photo.id+'/file'}))});
  }
  const associationMatch=p.match(/^guest\/media\/([\w-]+)\/associate$/);
  if(associationMatch&&method==='POST'){
@@ -358,14 +377,14 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
  m=p.match(/^guest\/media\/([\w-]+)\/(status|file|optimize)$/);
  if(m){
   const session=await guestSession(),media=await one('SELECT * FROM media WHERE id=$1 AND guest_id=$2 AND event_id=$3',[uuid.parse(m[1]),session.guest_id,session.event_id]);
-  if(!media||media.kind!=='video_wish'||media.moderation==='deleted')fail('NOT_FOUND','Video tidak ditemukan.',404);
+  if(!media||media.moderation==='deleted'||(media.kind!=='video_wish'&&!(isPhoto(media.kind)&&m[2]==='file'&&method==='GET')))fail('NOT_FOUND','Media tidak ditemukan.',404);
   const ownerEvent=await event(media.event_id);
   if(Date.now()>+new Date(ownerEvent.end_at)+ownerEvent.snapshot.exportDays*86400000)fail('RETENTION_EXPIRED','Masa unduh sudah berakhir.',410);
   if(m[2]==='status'&&method==='GET')return ok({processing:media.processing,url:media.processing==='ready'?'/api/v1/guest/media/'+media.id+'/file':undefined,error:media.processing==='failed'?'Hasil video belum dapat disiapkan. Pilih optimasi untuk mencoba kembali.':undefined});
   if(m[2]==='file'&&method==='GET'){
-   if(media.processing!=='ready')fail('MEDIA_NOT_READY','Video masih disiapkan.',409);
+   if(media.processing!=='ready'&&!isPhoto(media.kind))fail('MEDIA_NOT_READY','Video masih disiapkan.',409);
    const object=await storage.stream(media.object_key);
-   return new Response(object.body as ReadableStream<Uint8Array>,{headers:{'Content-Type':media.mime,'Cache-Control':'private,no-store','Content-Disposition':attachmentHeader('Video-kenangan.mp4'),...(object.bytes?{'Content-Length':String(object.bytes)}:{})}});
+   return new Response(object.body as ReadableStream<Uint8Array>,{headers:{'Content-Type':media.mime,'Cache-Control':'private,no-store','Content-Disposition':isPhoto(media.kind)?'inline':attachmentHeader('Video-kenangan.mp4'),...(object.bytes?{'Content-Length':String(object.bytes)}:{})}});
   }
   if(m[2]==='optimize'&&method==='POST'){
    const result=await (await database()).transaction(async tx=>{
