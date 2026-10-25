@@ -42,7 +42,7 @@ export async function reserve(input:any){
   if(!['disposable_photo','photo_strip','voice','video_wish','gif'].includes(kind))fail('INVALID_KIND','Mode tidak valid.');
   if((kind==='photo_strip'&&!p.frames)||(kind==='gif'&&!p.creative))fail('PLAN_FEATURE_UNAVAILABLE','Mode ini tidak tersedia pada paket acara.',403);
   if(!settings.modes.includes(kind))fail('MODE_DISABLED','Mode tidak diaktifkan.',403);
-  const mime=String(input.mimeType||'');const valid=isPhoto(kind)?(kind==='gif'?['image/gif']:['image/jpeg','image/png','image/webp']):kind==='voice'?['audio/webm','audio/ogg','audio/mp4','audio/mpeg']:['video/webm','video/mp4','video/quicktime'];
+  const mime=String(input.mimeType||'');const valid=isPhoto(kind)?(kind==='gif'?['image/gif']:['image/jpeg','image/png','image/webp']):kind==='voice'?['audio/webm','audio/ogg','audio/mp4','audio/mpeg','audio/wav']:['video/webm','video/mp4','video/quicktime'];
   if(!valid.includes(mime.split(';')[0]))fail('UNSUPPORTED_MEDIA','Format media tidak didukung.',415);
   if(size>(isPhoto(kind)?12:kind==='voice'?8:30)*1024**2)fail('FILE_TOO_LARGE','Berkas terlalu besar.',413);
   const usage=await rows("SELECT kind,guest_id,max_bytes,snapshot->>'guestPhotoReset' AS guest_photo_reset FROM intents WHERE event_id=$1 AND (state='finalized' OR (state IN ('reserved','uploaded') AND expires_at>now()))",[e.id],tx);

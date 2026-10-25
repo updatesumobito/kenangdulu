@@ -5,7 +5,7 @@ import {ArrowLeft,ArrowRight,Camera,Check,CheckCheck,ChevronRight,Download,Heart
 import {guestVideoLimit} from '@/lib/media-limits';
 import {recoverGuestPhotos} from '@/lib/guest-photo-quota';
 import {api,post,Notice,Field} from './ui';
-import {uploadMemory} from './guest-upload';
+import {sendGuestNote,uploadMemory} from './guest-upload';
 import GuestDraftPreview from './guest-draft-preview';
 import {downloadGuestFile,guestDownloadFiles,isDraftPhoto,newGuestDraft,readGuestDraft,writeGuestDraft,type GuestDraft,type WizardStep} from '@/lib/guest-draft';
 const Loading=()=> <p className="gw-loading" role="status">Menyiapkan ruang kenanganmu…</p>;
@@ -98,14 +98,15 @@ export default function GuestWizard({event:e,preview=false}:{event:any;preview?:
     setSendLabel(`Mengirim ${item.kind==='voice'?'suara':item.kind==='video_wish'?'video':'foto'} · ${i+1} dari ${original.media.length}`);
     let result:any;
     for(let attempt=0;attempt<2;attempt++){
-     try{result=await uploadMemory(e.id,item.kind,item.blob,false,item.key,p=>setProgress(Math.min(99,Math.round((finished+item.blob.size*p/100)/total*100))),intentId=>commit(d=>({...d,media:d.media.map(m=>m.id===item.id?{...m,intentId}:m)})),item.presentation);break;}
+     try{result=await uploadMemory(e.id,item.kind,item.blob,false,item.key,p=>setProgress(previous=>Math.max(previous,Math.min(99,Math.round((finished+item.blob.size*p/100)/total*100)))),intentId=>commit(d=>({...d,media:d.media.map(m=>m.id===item.id?{...m,intentId}:m)})),item.presentation,attempt=>setSendLabel(`Menyambungkan kembali kiriman ${i+1} dari ${original.media.length} · percobaan ${attempt}`));break;}
      catch(err:any){if(err.code==='UPLOAD_INTENT_EXPIRED'&&attempt===0){item={...item,key:crypto.randomUUID(),intentId:undefined};commit(d=>({...d,media:d.media.map(m=>m.id===item.id?item:m)}));await writes.current;}else throw err;}
     }
     if(!result)throw Error('Unggahan belum selesai. Silakan lanjutkan pengiriman.');
     commit(d=>({...d,media:d.media.map(m=>m.id===item.id?{...m,mediaId:result.id,processing:result.processing}:m)}));await writes.current;finished+=item.blob.size;setProgress(Math.min(99,Math.round(finished/total*100)));
    }
    failedId='';
-   if(e.settings.modes.includes('wish_card')&&!current.current!.noteId){setSendLabel('Menitipkan ucapanmu…');const result=await post('guest/notes',{text:original.text.trim(),cardStyle:'plain',attachmentIds:[],consentPublic:false,idempotencyKey:original.noteKey});commit(d=>({...d,noteId:result.id}));await writes.current;}
+   if(e.settings.modes.includes('wish_card')&&!current.current!.noteId){setSendLabel('Menitipkan ucapanmu…');const result=await sendGuestNote(original.text.trim(),original.noteKey,attempt=>setSendLabel(`Menyambungkan kembali ucapanmu · percobaan ${attempt}`));commit(d=>({...d,noteId:result.id}));await writes.current;}
+   if(current.current!.media.some(item=>!item.mediaId)||(e.settings.modes.includes('wish_card')&&!current.current!.noteId))throw Error('Sebagian kenangan belum dikonfirmasi. Lanjutkan pengiriman untuk menyelesaikannya.');
    commit(d=>({...d,sent:true,step:'review'}));await writes.current;setProgress(100);setSendLabel('Semua kenangan sudah terkirim.');
   }catch(err:any){setError(err.message);if(err.code==='GUEST_SESSION_REQUIRED')setSession(null);else{try{const limits=await api('guest/me/limits');if(limits.eventId===e.id)setSession(limits);}catch{}}if(failedId&&['INVALID_MEDIA','UNSUPPORTED_MEDIA','FILE_TOO_LARGE','DURATION_EXCEEDED','PRESENTATION_TOO_LARGE'].includes(err.code))commit(d=>({...d,repairId:failedId}));setSendLabel('Sebagian kiriman mungkin sudah tersimpan. Lanjutkan tanpa mengirim ulang bagian yang berhasil.');}
   finally{setSending(false);sendingRef.current=false;}
