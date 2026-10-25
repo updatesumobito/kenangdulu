@@ -75,6 +75,6 @@ export default function GuestOpening({name,date,hashtag,modes=[],children}:{name
    <div className="opening-actions"><div className="opening-invitation"><button ref={enterButton} className="opening-enter" onClick={enter} disabled={phase==='opening'}>Mulai buat kenangan <ArrowRight size={17}/></button><small>Kamera & mikrofon hanya aktif saat kamu memilihnya.</small></div><span className="opening-actions-note"><Heart size={13}/> Kenangan kecil, berarti besar.</span></div>
    <footer><span>TAKE A MOMENT. MAKE A MEMORY.</span><span>{hashtag||'KEPT WITH KENANG DULU'}</span></footer>
   </section>}
-  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{children}</div>
+  <div ref={content} className="gw-opening-content" inert={phase!=='entered'} aria-hidden={phase!=='entered'||undefined}>{phase==='entered'&&<div className="tutorial-replay-row"><button className="tutorial-replay" onClick={()=>{setStep(0);setPhase('idle')}}><Play size={13}/> Lihat cara pakai</button></div>}{phase==='entered'&&children}</div>
  </>;
 }
