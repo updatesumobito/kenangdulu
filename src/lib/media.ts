@@ -37,7 +37,7 @@ export async function reserve(input:any){
  return (await database()).transaction(async tx=>{
   const e=await one('SELECT * FROM events WHERE id=$1 FOR UPDATE',[s.event_id],tx);await checkLive(e);
   await tx.query("UPDATE intents SET state='expired' WHERE event_id=$1 AND state IN ('reserved','uploaded') AND expires_at<now()",[e.id]);
-  const old=await one('SELECT * FROM intents WHERE event_id=$1 AND guest_id=$2 AND client_key=$3',[e.id,s.guest_id,input.idempotencyKey],tx);if(old){if(['expired','purged','failed'].includes(old.state))fail('UPLOAD_INTENT_EXPIRED','Unggahan kedaluwarsa. Pilih ulang untuk mencoba lagi.',409);return old;}
+  const old=await one('SELECT * FROM intents WHERE event_id=$1 AND guest_id=$2 AND client_key=$3',[e.id,s.guest_id,input.idempotencyKey],tx);if(old){if(['expired','purged','failed'].includes(old.state)||old.snapshot?.guestPhotoReset===true)fail('UPLOAD_INTENT_EXPIRED','Unggahan kedaluwarsa. Pilih ulang untuk mencoba lagi.',409);return old;}
   const kind=input.kind,p=e.snapshot,settings=guestSettings(e.slug,s.snapshot.settings);
   if(!['disposable_photo','photo_strip','voice','video_wish','gif'].includes(kind))fail('INVALID_KIND','Mode tidak valid.');
   if((kind==='photo_strip'&&!p.frames)||(kind==='gif'&&!p.creative))fail('PLAN_FEATURE_UNAVAILABLE','Mode ini tidak tersedia pada paket acara.',403);
@@ -45,12 +45,12 @@ export async function reserve(input:any){
   const mime=String(input.mimeType||'');const valid=isPhoto(kind)?(kind==='gif'?['image/gif']:['image/jpeg','image/png','image/webp']):kind==='voice'?['audio/webm','audio/ogg','audio/mp4','audio/mpeg']:['video/webm','video/mp4','video/quicktime'];
   if(!valid.includes(mime.split(';')[0]))fail('UNSUPPORTED_MEDIA','Format media tidak didukung.',415);
   if(size>(isPhoto(kind)?12:kind==='voice'?8:30)*1024**2)fail('FILE_TOO_LARGE','Berkas terlalu besar.',413);
-  const usage=await rows("SELECT kind,guest_id,max_bytes FROM intents WHERE event_id=$1 AND (state='finalized' OR (state IN ('reserved','uploaded') AND expires_at>now()))",[e.id],tx);
+  const usage=await rows("SELECT kind,guest_id,max_bytes,snapshot->>'guestPhotoReset' AS guest_photo_reset FROM intents WHERE event_id=$1 AND (state='finalized' OR (state IN ('reserved','uploaded') AND expires_at>now()))",[e.id],tx);
   const physical=await one("SELECT count(*)::int AS count,coalesce(sum(bytes),0)::bigint AS bytes FROM media WHERE event_id=$1 AND source='physical_booth'",[e.id],tx);
   const frameBytes=await one('SELECT coalesce(sum(bytes),0)::bigint AS bytes FROM (SELECT bytes FROM frame_assets WHERE event_id=$1 UNION ALL SELECT bytes FROM event_assets WHERE event_id=$1) assets',[e.id],tx);
   const photos=usage.filter(v=>isPhoto(v.kind));
   if(isPhoto(kind)&&photos.length+physical.count>=p.photos)fail('EVENT_QUOTA_EXCEEDED','Kuota foto acara telah habis.',409);
-  if(kind==='disposable_photo'&&usage.filter(v=>v.guest_id===s.guest_id&&v.kind==='disposable_photo').length>=Math.min(p.perGuest,settings.perGuest))fail('GUEST_LIMIT_EXCEEDED','Jatah foto Anda sudah habis.',409);
+  if(kind==='disposable_photo'&&usage.filter(v=>v.guest_id===s.guest_id&&v.kind==='disposable_photo'&&v.guest_photo_reset!=='true').length>=Math.min(p.perGuest,settings.perGuest))fail('GUEST_LIMIT_EXCEEDED','Jatah foto Anda sudah habis.',409);
   if(kind==='voice'&&usage.filter(v=>v.kind==='voice').length>=p.voice||kind==='video_wish'&&usage.filter(v=>v.kind==='video_wish').length>=p.video)fail('EVENT_QUOTA_EXCEEDED','Kuota rekaman acara telah habis.',409);
   const reservedBytes=Math.max(size*2,isPhoto(kind)?256*1024:kind==='voice'?settings.voiceSec*16000+65536:guestVideoLimit(settings.videoSec)*160000+262144);
   if(usage.reduce((n,v)=>n+Number(v.max_bytes),0)+Number(physical.bytes)+Number(frameBytes.bytes)+reservedBytes>p.storage)fail('STORAGE_QUOTA_EXCEEDED','Penyimpanan acara penuh.',409);
@@ -89,6 +89,7 @@ export async function inspect(body:Buffer,kind:string,maxSec:number,presentation
 }
 export async function finalize(intentId:string){
  const s=await guestSession();const i=await one('SELECT * FROM intents WHERE id=$1 AND guest_id=$2',[intentId,s.guest_id]);if(!i)fail('NOT_FOUND','Unggahan tidak ditemukan.',404);
+ if(i.snapshot?.guestPhotoReset===true)fail('UPLOAD_INTENT_EXPIRED','Foto sudah direset. Ambil foto baru untuk melanjutkan.',409);
  if(i.state==='finalized')return await one('SELECT * FROM media WHERE intent_id=$1',[i.id]);
  if(i.state!=='uploaded'||new Date(i.expires_at)<new Date())fail('UPLOAD_INTENT_EXPIRED','Unggah berkas terlebih dahulu atau mulai ulang.',409);
  const body=await storage.get(i.object_key);if(body.length>Number(i.max_bytes))fail('FILE_TOO_LARGE','Berkas terlalu besar.',413);

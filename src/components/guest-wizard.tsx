@@ -55,7 +55,8 @@ export default function GuestWizard({event:e,preview=false}:{event:any;preview?:
    const local=localResult.status==='fulfilled'?localResult.value:null,s=sessionResult.status==='fulfilled'&&sessionResult.value.eventId===e.id?sessionResult.value:null;
    setSession(s);if(localResult.status==='rejected')setStorageWarning(true);
    const usable=local&&(!s||!local.guestId||local.guestId===s.guestId)?local:null,next=usable||newGuestDraft(e.id,s?.guestId,s?.name);
-   if(!next.sent&&s&&photosResult.status==='fulfilled'&&photosResult.value.eventId===e.id&&photosResult.value.guestId===s.guestId)next.media=recoverGuestPhotos(next.media,photosResult.value.items);
+   if(s)next.media=recoverGuestPhotos(next.media,[],s.resetPhotoKeys);
+   if(!next.sent&&s&&photosResult.status==='fulfilled'&&photosResult.value.eventId===e.id&&photosResult.value.guestId===s.guestId)next.media=recoverGuestPhotos(next.media,photosResult.value.items,s.resetPhotoKeys);
    if(!stepsFor(e).includes(next.step)||!canVisit(next,next.step,stepsFor(e),e))next.step='name';
    if(next.started&&!next.sent)next.step='review';
    current.current=next;setDraft(next);setRestored(!!usable);initialized.current=true;
@@ -67,16 +68,17 @@ export default function GuestWizard({event:e,preview=false}:{event:any;preview?:
 
  function edit(change:Partial<GuestDraft>,invalidate:WizardStep){commit(d=>({...d,...change,confirmed:d.confirmed.filter(s=>s!==invalidate)}));}
  async function resetPhotos(){
-  const d=current.current;if(!d||busy||sendingRef.current||d.started)return;
-  let limits=session,saved:any[]=[];
-  if(!preview){
-   await post('guest/me/photos/reset',{eventId:e.id,guestId:d.guestId});
-   const [fresh,photos]=await Promise.all([api('guest/me/limits'),api('guest/memories')]);
-   if(fresh.eventId!==e.id||fresh.guestId!==d.guestId||photos.eventId!==e.id||photos.guestId!==d.guestId)throw Error('Sesi acara berubah. Buka kembali halaman acara.');
-   limits=fresh;saved=photos.items;
-  }
-  const media=recoverGuestPhotos(d.media.filter(item=>!isDraftPhoto(item)||!!item.mediaId),saved);
-  setSession(limits);commit({...d,media,confirmed:d.confirmed.filter(s=>s!=='camera'),repairId:undefined});setError('');
+  const d=current.current;if(!d||!session||busy||sendingRef.current)throw Error('Tunggu pengiriman selesai sebelum mereset foto.');
+  let limits={...session,remaining:Math.min(e.snapshot.perGuest,session.captureSnapshot.settings.perGuest),photoIntents:[]};
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+  try{
+   if(!preview){
+    limits=await api('guest/me/photos/reset',{method:'POST',body:JSON.stringify({eventId:e.id,guestId:d.guestId}),signal:controller.signal});
+    if(limits.eventId!==e.id||limits.guestId!==d.guestId)throw Error('Sesi acara berubah. Buka kembali halaman acara.');
+   }
+   setSession(limits);commit({...d,media:d.media.filter(item=>!isDraftPhoto(item)),confirmed:d.confirmed.filter(s=>s!=='camera'&&s!=='review'),repairId:undefined,started:false,sent:false});setError('');
+  }catch(err){if((err as Error).name==='AbortError')throw Error('Reset belum mendapat respons. Periksa koneksi lalu coba reset lagi.');throw err;}
+  finally{clearTimeout(timeout);}
  }
  function navigate(next:WizardStep){const d=current.current;if(!d||sendingRef.current||captureBusy||d.started||!session||!canVisit(d,next,steps,e))return;setError('');commit({...d,step:next});window.scrollTo({top:0,behavior:'instant'});}
  function advance(skipped=false){const d=current.current;if(!d||captureBusy)return;let next={...d};if(step==='video'&&skipped)next={...next,videoSkipped:true,media:next.media.filter(m=>m.kind!=='video_wish')};if(step==='video'&&!skipped&&next.media.some(m=>m.kind==='video_wish'&&!m.mediaId&&(!Number.isFinite(m.duration)||(m.duration??Infinity)>guestVideoLimit(session.captureSnapshot.settings.videoSec)+.1))){setError('Pilih video yang durasinya sesuai batas sesi sebelum lanjut.');return;}if(!filled(next,step,e))return;next.confirmed=Array.from(new Set([...next.confirmed,step]));next.step=steps[Math.min(steps.indexOf(step)+1,steps.length-1)];commit(next);setError('');window.scrollTo({top:0,behavior:'instant'});}

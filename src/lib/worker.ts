@@ -22,7 +22,7 @@ export async function processJobs(maxJobs=25){if(global.kvWorking)return;global.
   const job=await (await database()).transaction(async tx=>{const j=await one("SELECT * FROM jobs WHERE status='queued' AND run_after<=now() ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1",[],tx);if(j)await tx.query("UPDATE jobs SET status='working',attempts=attempts+1,run_after=now() WHERE id=$1",[j.id]);return j});if(!job)break;
   const heartbeat=setInterval(()=>{void rows("UPDATE jobs SET run_after=now() WHERE id=$1 AND status='working'",[job.id]).catch(()=>{})},30000);heartbeat.unref();
   try{let result:any={};
-   if(job.kind==='media.process'){const m=await one('SELECT * FROM media WHERE id=$1',[job.payload.mediaId]);if(m&&m.processing!=='ready')await processMedia(m);}
+   if(job.kind==='media.process'){const m=await one('SELECT * FROM media WHERE id=$1',[job.payload.mediaId]);if(m&&m.processing!=='ready'&&m.moderation!=='deleted')await processMedia(m);}
    else if(job.kind==='export.zip'||job.kind==='book.pdf')result=await renderEventExport(job,await one('SELECT * FROM events WHERE id=$1',[job.event_id]));
    else if(job.kind==='frame-assets.cleanup'){for(const key of job.payload.keys||[])if(!await one('SELECT id FROM frame_assets WHERE object_key=$1 AND event_id=$2',[key,job.event_id]))await storage.remove(key);result={cleaned:true};}
    else if(job.kind==='retention.purge'){

@@ -1,7 +1,7 @@
 import {guestSettings} from '@/lib/guest-settings';
 import {guestPath} from '@/lib/guest-path';
 import {guestNoteId} from '@/lib/guest-note-id';
-import {guestPhotoIntents,resetGuestPhotoReservations} from '@/lib/guest-photo-recovery';
+import {guestPhotoIntents,guestPhotoResetKeys,resetGuestPhotoReservations} from '@/lib/guest-photo-recovery';
 import {deleteAdminAlbumMedia,editAdminPhoto} from '@/lib/admin-album-media';
 import { NextRequest,NextResponse,after } from 'next/server';
 import { cookies } from 'next/headers';
@@ -351,12 +351,13 @@ async function handler(req:NextRequest,ctx:{params:Promise<{path:string[]}>}){
   return ok({name:b.name});
  }
  if(p==='guest/me/limits'&&method==='GET'){
-  const s=await guestSession(),e=await event(s.event_id),photoIntents=await guestPhotoIntents(await database(),e.id,s.guest_id);return ok({eventId:e.id,guestId:s.guest_id,name:s.name,verified:s.verified,remaining:Math.max(0,Math.min(e.snapshot.perGuest,s.snapshot.settings.perGuest)-photoIntents.length),photoIntents,captureSnapshot:s.snapshot});
+  const s=await guestSession(),e=await event(s.event_id),db=await database(),[photoIntents,resetPhotoKeys]=await Promise.all([guestPhotoIntents(db,e.id,s.guest_id),guestPhotoResetKeys(db,e.id,s.guest_id)]);return ok({eventId:e.id,guestId:s.guest_id,name:s.name,verified:s.verified,remaining:Math.max(0,Math.min(e.snapshot.perGuest,s.snapshot.settings.perGuest)-photoIntents.length),photoIntents,resetPhotoKeys,captureSnapshot:s.snapshot});
  }
  if(p==='guest/me/photos/reset'&&method==='POST'){
   const b=z.object({eventId:uuid,guestId:uuid}).parse(await body(req)),s=await guestSession(b.eventId);if(s.guest_id!==b.guestId)fail('FORBIDDEN','Sesi tamu berubah. Buka kembali halaman acara.',403);
   const e=await event(s.event_id);await checkLive(e);
-  return ok(await resetGuestPhotoReservations(await database(),e.id,s.guest_id));
+  const reset=await resetGuestPhotoReservations(await database(),e.id,s.guest_id);
+  return ok({...reset,eventId:e.id,guestId:s.guest_id,name:s.name,verified:s.verified,remaining:Math.max(0,Math.min(e.snapshot.perGuest,s.snapshot.settings.perGuest)-reset.photoIntents.length),captureSnapshot:s.snapshot});
  }
  if(p==='guest/memories'&&method==='GET'){
   const s=await guestSession();return ok({eventId:s.event_id,guestId:s.guest_id,items:(await rows("SELECT m.id,m.kind,m.created_at,m.intent_id AS \"intentId\",i.client_key AS key,m.mime FROM media m JOIN intents i ON i.id=m.intent_id WHERE m.event_id=$1 AND m.guest_id=$2 AND m.kind IN ('disposable_photo','photo_strip','gif') AND m.moderation<>'deleted' ORDER BY m.created_at DESC LIMIT 300",[s.event_id,s.guest_id])).map(photo=>({...photo,url:'/api/v1/guest/media/'+photo.id+'/file'}))});
